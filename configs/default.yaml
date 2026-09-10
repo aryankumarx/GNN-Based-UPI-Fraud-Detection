@@ -1,0 +1,40 @@
+# Default training configuration
+
+seed: 42
+device: auto  # auto, cuda, cpu
+
+data:
+  raw_data_dir: data/raw
+  processed_data_dir: data/processed
+  dataset_name: upi_transactions
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+model:
+  type: graphsage  # graphsage, gat, gcn
+  in_channels: 64
+  hidden_channels: 128
+  out_channels: 2
+  num_layers: 2
+  dropout: 0.3
+  num_heads: 4  # GAT only
+  
+training:
+  learning_rate: 0.001
+  weight_decay: 0.0005
+  epochs: 200
+  batch_size: 512
+  patience: 20
+  num_neighbors: [10, 5]
+  focal_loss_alpha: 0.25
+  focal_loss_gamma: 2.0
+  fraud_class_weight: 10.0
+
+inference:
+  fraud_threshold: 0.7
+  max_latency_ms: 200
+  rule_weight: 0.3
+  velocity_window_minutes: 5
+  velocity_max_transactions: 5
+  amount_std_threshold: 3.0
