@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: gnn-upi-fraud-detection
-    env: docker
-    plan: free
-    dockerfilePath: Dockerfile
-    healthCheckPath: /health
-    autoDeploy: true

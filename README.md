@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C.svg" alt="PyTorch" />
   <img src="https://img.shields.io/badge/FastAPI-0.104%2B-009688.svg" alt="FastAPI" />
   <img src="https://img.shields.io/badge/Design-Wise%20System%20(%239fe870)-9fe870.svg" alt="Wise Design" />
-  <img src="https://img.shields.io/badge/Deploy-Vercel%20%7C%20Render-black.svg" alt="Deployment" />
+  <img src="https://img.shields.io/badge/Deploy-Vercel-black.svg" alt="Deployment" />
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" />
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" />
 </p>
@@ -22,7 +22,7 @@ Featuring a live transaction monitor designed strictly under the **Wise Design S
 - **Extreme Imbalance Handling:** Trained with **Sigmoid Focal Loss** ($\alpha=0.25, \gamma=2.0$) on highly skewed datasets (< 1.5% fraud rate) to eliminate trivial benign gradients.
 - **70/30 Hybrid Decision Engine:** Blends topological neural probability ($0.70 \times P_{\text{GNN}}$) with deterministic velocity and anomaly checks ($0.30 \times S_{\text{Rule}}$) for instant cold-start coverage and 100% regulatory explainability (XAI).
 - **Sub-10ms Inference SLA:** Single-sample inference executes in **6.4 ms** on commodity CPU hardware.
-- **1-Click Cloud Deployment:** Ready for serverless hosting on **Vercel** (with edge static UI) and containerized deployment on **Render** via multi-stage Dockerfile.
+- **1-Click Cloud Deployment on Vercel:** Zero-config serverless edge deployment with instantaneous static frontend delivery and serverless Python microservice execution.
 
 ---
 
@@ -100,19 +100,22 @@ python scripts/profile_latency.py
 
 ---
 
-## Deployment
+## Deployment on Vercel
 
-### Option A: Vercel (Serverless)
-The project includes pre-configured `vercel.json`, `api/index.py`, and `public/index.html`.
+The project is natively optimized for **Vercel Edge & Serverless Functions** (`vercel.json`, `api/index.py`, and `public/index.html`).
+
+### Deploy via GitHub (Recommended):
+1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+2. Click **Add New...** &rarr; **Project**.
+3. Select your repository: `aryankumarx/GNN-Based-UPI-Fraud-Detection`.
+4. Framework Preset: select **Other** (Root directory: `./`).
+5. Click **Deploy**. Vercel will build and deploy the dashboard globally on edge CDN in ~45 seconds!
+
+### Deploy via Vercel CLI:
 ```bash
 npm install -g vercel
 vercel
 ```
-
-### Option B: Render (Docker Container)
-1. Push your repository to GitHub.
-2. In Render, create a new **Web Service** connected to your repository.
-3. Render automatically detects `render.yaml` and builds the production CPU PyTorch Docker container.
 
 ---
 
@@ -122,7 +125,8 @@ vercel
 ├── .github/workflows/       # GitHub Actions automated CI testing
 ├── api/
 │   ├── main.py             # FastAPI backend with static mounting & CORS
-│   └── index.py            # Vercel serverless entry point
+│   ├── index.py            # Vercel serverless entry point
+│   └── requirements.txt    # Lightweight Vercel serverless dependencies
 ├── dashboard/
 │   └── index.html          # Wise-themed interactive SPA dashboard
 ├── docs/
@@ -141,7 +145,6 @@ vercel
 │   └── training/           # Sigmoid focal loss & optimization loops
 ├── tests/                  # Unit & integration test suites
 ├── Dockerfile              # Multi-stage CPU PyTorch container
-├── render.yaml             # Render cloud infrastructure blueprint
 └── vercel.json             # Vercel serverless routing configuration
 ```
 
