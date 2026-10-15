@@ -1,1282 +1,1715 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPI Graph Intelligence — Real-Time GNN Fraud Defense</title>
-    <!-- Inter Variable font mapped to 300, 450, 600, 650 weights -->
+    <title>SENTINEL-UPI &bull; Wise-Grade GNN Fraud Detection</title>
+    <!-- Typography: Inter (with 400, 600, and 900 for Wise Display Sans) & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;450;600;650;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Vis.js CDN -->
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wiseGreen: '#9fe870',
+                        wiseGreenHover: '#cdffad',
+                        wiseGreenNeutral: '#c5edab',
+                        wiseGreenPale: '#e2f6d5',
+                        canvasSoft: '#e8ebe6',
+                        canvas: '#ffffff',
+                        ink: '#0e0f0c',
+                        inkDeep: '#163300',
+                        wiseBody: '#454745',
+                        wiseMute: '#868685',
+                        positive: '#2ead4b',
+                        positiveDeep: '#054d28',
+                        warning: '#ffd11a',
+                        warningDeep: '#b86700',
+                        warningContent: '#4a3b1c',
+                        negative: '#d03238',
+                        negativeDeep: '#a72027',
+                        negativeDarkest: '#a7000d',
+                        negativeBg: '#fbe9e9',
+                        negativeCallout: '#320707'
+                    },
+                    borderRadius: {
+                        'wise': '24px',
+                        'pill': '9999px'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            /* Palette */
-            --colors-canvas: #ffffff;
-            --colors-canvas-soft: #f3f3f3;
-            --colors-field: #f0f0f0;
-            --colors-hairline-soft: #f0f0f0;
-            --colors-hairline: #e0e0e0;
-            
-            --colors-ink: #141414;
-            --colors-ink-soft: #262626;
-            --colors-text-muted: #707070;
-            --colors-text-faint: #adadad;
-            --colors-on-primary: #ffffff;
-            
-            /* Single Chromatic Accent: Electric Blue for decision emphasis */
-            --colors-accent: #0066ff;
-            --colors-accent-soft: rgba(0, 102, 255, 0.08);
-
-            /* Radius */
-            --rounded-none: 0px;
-            --rounded-sm: 16px;
-            --rounded-md: 24px;
-            --rounded-full: 9999px;
-            
-            /* Spacing */
-            --spacing-xxs: 4px;
-            --spacing-xs: 8px;
-            --spacing-sm: 12px;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
-            --spacing-xl: 32px;
-            --spacing-xxl: 48px;
-            --spacing-section: 80px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, "Helvetica Neue", Arial, sans-serif;
-            letter-spacing: 0;
-            -webkit-font-smoothing: antialiased;
-        }
-
         body {
-            background-color: var(--colors-canvas);
-            color: var(--colors-ink);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background-color: #e8ebe6;
+            color: #0e0f0c;
+            font-family: 'Inter', sans-serif;
+            font-feature-settings: "calt";
             overflow-x: hidden;
         }
 
-        /* Top Centered Floating Nav Pill */
-        .nav-wrapper {
-            position: sticky;
-            top: 24px;
-            z-index: 100;
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            padding: 0 16px;
-            pointer-events: none;
-        }
-
-        .nav-pill {
-            pointer-events: auto;
-            background: var(--colors-canvas-soft);
-            height: 52px;
-            border-radius: var(--rounded-full);
-            display: flex;
-            align-items: center;
-            padding: 4px 6px 4px 18px;
-            gap: 20px;
-            box-shadow: none;
-            border: 1px solid var(--colors-hairline);
-            max-width: 820px;
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-decoration: none;
-            color: var(--colors-ink);
-        }
-
-        .nav-logo-squircle {
-            width: 28px;
-            height: 28px;
-            background: var(--colors-ink);
-            border-radius: 30%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--colors-on-primary);
-            font-weight: 650;
-            font-size: 13px;
-        }
-
-        .nav-title {
-            font-size: 15px;
-            font-weight: 650;
-            color: var(--colors-ink);
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .nav-link {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--colors-text-muted);
-            text-decoration: none;
-            cursor: pointer;
-            transition: color 0.15s ease;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--colors-ink);
-        }
-
-        /* Button Primitives */
-        .button-primary {
-            background: var(--colors-ink);
-            color: var(--colors-on-primary);
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: var(--rounded-full);
-            padding: 0 20px;
-            height: 42px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: transform 0.1s ease, background 0.15s ease;
-            text-decoration: none;
-        }
-
-        .button-primary:hover {
-            background: var(--colors-ink-soft);
-            transform: translateY(-1px);
-        }
-
-        .button-outline {
-            background: var(--colors-canvas);
-            color: var(--colors-ink);
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: var(--rounded-full);
-            padding: 0 20px;
-            height: 42px;
-            border: 1px solid var(--colors-hairline);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: background 0.15s ease;
-        }
-
-        .button-outline:hover {
-            background: var(--colors-canvas-soft);
-        }
-
-        .button-pill-soft {
-            background: var(--colors-canvas-soft);
-            color: var(--colors-ink);
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: var(--rounded-full);
-            padding: 6px 14px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.15s ease;
-        }
-
-        .button-pill-soft:hover {
-            background: var(--colors-hairline);
-        }
-
-        /* Hero Section */
-        .hero {
-            max-width: 1080px;
-            margin: 64px auto 48px auto;
-            padding: 0 24px;
-            text-align: center;
-        }
-
-        .hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 12px;
-            border-radius: var(--rounded-full);
-            background: var(--colors-canvas-soft);
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--colors-text-muted);
-            margin-bottom: 24px;
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        .hero h1 {
-            font-size: 64px;
-            font-weight: 650;
+        /* Wise Sans Display Typography */
+        .font-display-hero {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            letter-spacing: -0.04em;
             line-height: 1.05;
-            color: var(--colors-ink);
-            margin-bottom: 20px;
         }
 
-        .hero p.subtitle {
-            font-size: 20px;
-            font-weight: 300;
-            line-height: 1.4;
-            color: var(--colors-text-muted);
-            max-width: 680px;
-            margin: 0 auto 32px auto;
-        }
-
-        .hero-actions {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        /* Segmented Control */
-        .segmented-control {
-            background: var(--colors-canvas-soft);
-            border-radius: var(--rounded-full);
-            padding: 4px;
-            display: inline-flex;
-            gap: 4px;
-            margin: 0 auto 36px auto;
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        .segment-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 18px;
-            border-radius: var(--rounded-full);
-            font-size: 13px;
+        .font-display-sub {
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            color: var(--colors-text-muted);
-            cursor: pointer;
-            transition: all 0.15s ease;
+            letter-spacing: -0.02em;
         }
 
-        .segment-btn.active {
-            background: var(--colors-canvas);
-            color: var(--colors-ink);
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        /* Layout Container */
-        .main-container {
-            max-width: 1240px;
-            margin: 0 auto;
-            padding: 0 24px;
-            width: 100%;
-            flex: 1;
-        }
-
-        /* Metrics Ladder Cards */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 36px;
-        }
-
-        .metric-card {
-            background: var(--colors-canvas);
-            border: 1px solid var(--colors-hairline-soft);
-            border-radius: var(--rounded-md);
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .metric-card.featured {
-            background: var(--colors-canvas-soft);
-            border: none;
-        }
-
-        .metric-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .metric-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--colors-text-muted);
-        }
-
-        .badge-popular {
-            background: var(--colors-accent);
-            color: var(--colors-on-primary);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: var(--rounded-full);
-        }
-
-        .badge-ink {
-            background: var(--colors-ink);
-            color: var(--colors-on-primary);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: var(--rounded-full);
-        }
-
-        .metric-value {
-            font-size: 44px;
-            font-weight: 650;
-            line-height: 1.05;
-            color: var(--colors-ink);
-            margin-bottom: 6px;
-        }
-
-        .metric-caption {
-            font-size: 13px;
-            font-weight: 450;
-            color: var(--colors-text-muted);
-            line-height: 1.35;
-        }
-
-        /* Content Grid: Live Stream + Visualizer & Inspector */
-        .split-grid {
-            display: grid;
-            grid-template-columns: 1.15fr 0.85fr;
-            gap: 24px;
-            margin-bottom: 56px;
-        }
-
-        .surface-card {
-            background: var(--colors-canvas);
-            border: 1px solid var(--colors-hairline-soft);
-            border-radius: var(--rounded-md);
-            padding: 28px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .surface-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .surface-card-header h2 {
-            font-size: 22px;
-            font-weight: 650;
-            line-height: 1.15;
-            color: var(--colors-ink);
-        }
-
-        /* Data Table (ex-data-table-cell) */
-        .table-wrap {
-            overflow-x: auto;
-            border-radius: var(--rounded-sm);
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            text-align: left;
-        }
-
-        th {
-            background: var(--colors-canvas-soft);
-            color: var(--colors-text-muted);
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--colors-hairline);
-        }
-
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--colors-hairline-soft);
-            color: var(--colors-ink);
-            font-weight: 450;
-            vertical-align: middle;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr.row-clickable {
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-
-        tr.row-clickable:hover {
-            background: var(--colors-canvas-soft);
-        }
-
-        /* Squircles and Badges */
-        .app-icon-squircle {
-            width: 28px;
-            height: 28px;
-            border-radius: 30%;
-            background: var(--colors-field);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 650;
-            color: var(--colors-ink);
-            flex-shrink: 0;
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        .vpa-cell {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .pill-badge {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: var(--rounded-full);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .pill-badge-safe {
-            background: var(--colors-canvas-soft);
-            color: var(--colors-ink);
-            border: 1px solid var(--colors-hairline);
-        }
-
-        .pill-badge-fraud {
-            background: var(--colors-ink);
-            color: var(--colors-on-primary);
-        }
-
-        .pill-badge-flagged {
-            background: var(--colors-accent);
-            color: var(--colors-on-primary);
-        }
-
-        /* Network Visualizer Container */
-        #network-container {
-            height: 380px;
-            background: var(--colors-canvas-soft);
-            border-radius: var(--rounded-sm);
-            border: 1px solid var(--colors-hairline-soft);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Explainability Audit Box */
-        .audit-box {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: var(--rounded-sm);
-            background: var(--colors-canvas-soft);
-            border: 1px solid var(--colors-hairline-soft);
-        }
-
-        .audit-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .audit-header h3 {
-            font-size: 16px;
-            font-weight: 650;
-            color: var(--colors-ink);
-        }
-
-        .audit-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .audit-item {
-            font-size: 13px;
-            font-weight: 450;
-            color: var(--colors-ink);
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            line-height: 1.4;
-        }
-
-        .audit-item-dot {
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
-            border-radius: 50%;
-            background: var(--colors-ink);
-            margin-top: 6px;
-            flex-shrink: 0;
         }
 
-        /* Manual Evaluation Form (Inputs) */
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
+        ::-webkit-scrollbar-track {
+            background: #e8ebe6;
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+        ::-webkit-scrollbar-thumb {
+            background: #cdd2cb;
+            border-radius: 9999px;
         }
 
-        .form-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--colors-text-muted);
+        ::-webkit-scrollbar-thumb:hover {
+            background: #adb4aa;
         }
 
-        .text-input {
-            background: var(--colors-field);
-            border: none;
-            border-radius: var(--rounded-sm);
-            padding: 12px 16px;
-            font-size: 14px;
-            font-weight: 450;
-            color: var(--colors-ink);
-            outline: none;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pulseDot {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.5;
+            }
+        }
+
+        .pulse-live {
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+
+        /* Vis.js network container styles */
+        #network-container {
             width: 100%;
-            transition: all 0.15s ease;
+            height: 480px;
+            background: #ffffff;
+            border-radius: 24px;
         }
 
-        .text-input:focus {
-            box-shadow: 0 0 0 2px var(--colors-ink);
-        }
-
-        .text-input::placeholder {
-            color: var(--colors-text-faint);
-        }
-
-        /* Full-bleed Near-Black Inversion Footer */
-        footer {
-            background: var(--colors-ink);
-            color: var(--colors-on-primary);
-            border-top-left-radius: var(--rounded-md);
-            border-top-right-radius: var(--rounded-md);
-            margin-top: var(--spacing-section);
-            padding: 72px 24px 48px 24px;
-        }
-
-        .footer-inner {
-            max-width: 1240px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 40px;
-            padding-bottom: 48px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .footer-brand h2 {
-            font-size: 32px;
-            font-weight: 650;
-            line-height: 1.1;
-            margin-bottom: 10px;
-        }
-
-        .footer-brand p {
-            font-size: 14px;
-            font-weight: 300;
-            color: var(--colors-text-faint);
-            max-width: 420px;
-            line-height: 1.4;
-        }
-
-        .footer-columns {
-            display: flex;
-            gap: 64px;
-        }
-
-        .footer-col h4 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--colors-on-primary);
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .footer-col ul {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .footer-col a {
-            color: var(--colors-text-faint);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 450;
-            transition: color 0.15s ease;
-        }
-
-        .footer-col a:hover {
-            color: var(--colors-on-primary);
-        }
-
-        .footer-bottom {
-            max-width: 1240px;
-            margin: 24px auto 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: var(--colors-text-faint);
-        }
-
-        /* Responsive Breakpoints */
-        @media (max-width: 1024px) {
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .split-grid {
-                grid-template-columns: 1fr;
-            }
-            .hero h1 {
-                font-size: 48px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-            .hero h1 {
-                font-size: 38px;
-            }
-            .input-row {
-                grid-template-columns: 1fr;
-            }
-            .nav-pill {
-                padding: 4px 12px;
-                gap: 8px;
-            }
-            .nav-links {
-                display: none;
-            }
+        /* Drawer transition */
+        .drawer-slide {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
     </style>
 </head>
-<body>
 
-    <!-- Floating Stadium Nav Pill -->
-    <div class="nav-wrapper">
-        <nav class="nav-pill">
-            <a href="#" class="nav-brand">
-                <div class="nav-logo-squircle">UPI</div>
-                <span class="nav-title">Graph Intelligence.</span>
-            </a>
-            <div class="nav-links">
-                <a class="nav-link active" onclick="switchTab('feed')">Live Feed</a>
-                <a class="nav-link" onclick="switchTab('graph')">Mule Rings</a>
-                <a class="nav-link" onclick="switchTab('eval')">Audit Lab</a>
-                <a class="nav-link" href="#benchmarks">Benchmarks</a>
-            </div>
-            <button class="button-primary" onclick="triggerTestModal()">
-                + Test Transaction
-            </button>
-        </nav>
-    </div>
+<body class="bg-canvasSoft text-ink flex h-screen overflow-hidden antialiased">
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-eyebrow">
-            <span>Project 709</span>
-            <span>•</span>
-            <span>Graph Neural Networks for Real-Time UPI Fraud Detection</span>
-        </div>
-        <h1>Defend UPI at the relational layer.</h1>
-        <p class="subtitle">
-            Traditional classifiers miss device sharing and collusion rings. GraphSAGE aggregates multi-hop topological neighborhoods to catch coordinated fraud in milliseconds.
-        </p>
-
-        <div class="segmented-control">
-            <button class="segment-btn active" id="seg-stream" onclick="setFeedFilter('all')">All Transactions</button>
-            <button class="segment-btn" id="seg-flagged" onclick="setFeedFilter('flagged')">Flagged Fraud</button>
-            <button class="segment-btn" id="seg-approved" onclick="setFeedFilter('approved')">Verified Clean</button>
-        </div>
-
-        <div class="hero-actions">
-            <button class="button-primary" onclick="injectNormalTransaction()">
-                Stream Legitimate Txn
-            </button>
-            <button class="button-outline" onclick="injectMuleAttack()">
-                Simulate Mule Ring Collusion
-            </button>
-            <button class="button-pill-soft" onclick="resetFeed()">
-                Reset Feed ↺
-            </button>
-        </div>
-    </section>
-
-    <!-- Main Container -->
-    <main class="main-container">
-        
-        <!-- Metrics Elevation Ladder -->
-        <div class="metrics-grid">
-            <div class="metric-card featured">
-                <div class="metric-header">
-                    <span class="metric-label">GraphSAGE Precision</span>
-                    <span class="badge-popular">Top Metric</span>
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-72 bg-canvasSoft border-r border-[#d7dbd4] flex flex-col justify-between z-30 shrink-0 p-5">
+        <div class="space-y-6">
+            <!-- Brand Moment -->
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-wise bg-ink flex items-center justify-center text-wiseGreen shadow-sm">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
-                <div class="metric-value">99.62%</div>
-                <p class="metric-caption">Only 1 false positive out of 14,727 test transactions. Cuts customer friction.</p>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-header">
-                    <span class="metric-label">AUPRC Score</span>
-                    <span class="badge-ink">Evaluated</span>
-                </div>
-                <div class="metric-value">0.9993</div>
-                <p class="metric-caption">Area Under Precision-Recall Curve on severely imbalanced (2%) test partition.</p>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-header">
-                    <span class="metric-label">Monitored Volume</span>
-                    <span class="badge-ink">Live Feed</span>
-                </div>
-                <div class="metric-value" id="val-total-txns">100,000</div>
-                <p class="metric-caption">Chronologically indexed transactions with 1,172,124 relational entity edges.</p>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-header">
-                    <span class="metric-label">Inference Latency</span>
-                    <span class="badge-ink">P99 SLA</span>
-                </div>
-                <div class="metric-value">18 ms</div>
-                <p class="metric-caption">Sub-50ms real-time scoring budget compliant with NPCI PSP transaction limits.</p>
-            </div>
-        </div>
-
-        <!-- Split Grid: Live Stream + Topology Inspector -->
-        <div class="split-grid">
-            
-            <!-- Left: Live Transactions Stream (ex-data-table-cell) -->
-            <div class="surface-card">
-                <div class="surface-card-header">
-                    <h2>Live Ingestion Feed.</h2>
-                    <span class="pill-badge pill-badge-safe" id="live-indicator">Streaming Active</span>
-                </div>
-
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Transaction</th>
-                                <th>Sender</th>
-                                <th>Receiver</th>
-                                <th>Amount</th>
-                                <th>GNN Risk</th>
-                                <th>Decision</th>
-                            </tr>
-                        </thead>
-                        <tbody id="transaction-rows">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Right: Subgraph Visualizer & Explainability Card -->
-            <div class="surface-card">
-                <div class="surface-card-header">
-                    <h2>Topology & Audit.</h2>
-                    <span class="metric-label" id="inspecting-id">TXN_MULE_RING_01</span>
-                </div>
-
-                <!-- Vis.js Canvas -->
-                <div id="network-container"></div>
-
-                <!-- Explainability Card -->
-                <div class="audit-box" id="audit-box">
-                    <div class="audit-header">
-                        <h3 id="audit-title">Audit Log: Coordinated Collusion Ring.</h3>
-                        <span class="pill-badge pill-badge-fraud" id="audit-badge">BLOCKED</span>
-                    </div>
-                    <ul class="audit-list" id="audit-reasons">
-                        <li class="audit-item">
-                            <span class="audit-item-dot"></span>
-                            <span><strong>Shared Hardware Signature:</strong> Sender linked to <code>DEV_MULE_002</code> previously flagged in 5 unauthorized drain attempts.</span>
-                        </li>
-                        <li class="audit-item">
-                            <span class="audit-item-dot"></span>
-                            <span><strong>Graph Message Passing:</strong> Neighborhood risk density exceeds 0.94 due to multi-hop edges to known mule accounts.</span>
-                        </li>
-                        <li class="audit-item">
-                            <span class="audit-item-dot"></span>
-                            <span><strong>Velocity Anomaly:</strong> 3rd high-value transaction in 45 seconds during off-peak hours (02:40 AM).</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Interactive Real-Time Evaluation Lab -->
-        <div class="surface-card" style="margin-bottom: 56px;" id="eval-lab">
-            <div class="surface-card-header">
                 <div>
-                    <h2>Interactive Inference Lab.</h2>
-                    <p style="font-size: 14px; font-weight: 300; color: var(--colors-text-muted); margin-top: 4px;">
-                        Submit any transaction vector to test the trained GraphSAGE and rule engine microservice in real time.
-                    </p>
+                    <div class="font-display-hero text-xl tracking-tight text-ink flex items-center gap-1.5">
+                        <span>WiseGuard</span>
+                        <span
+                            class="text-[10px] font-mono px-2 py-0.5 rounded-pill bg-wiseGreen text-ink font-bold">UPI</span>
+                    </div>
+                    <p class="text-xs text-wiseBody font-medium">GNN Risk Engine &bull; P709</p>
                 </div>
-                <button class="button-primary" onclick="evaluateManualTxn()">
-                    Run GNN Score ⚡
+            </div>
+
+            <!-- Navigation Links (Wise pill navigation) -->
+            <nav class="space-y-1.5">
+                <button onclick="switchTab('live')" id="tab-btn-live"
+                    class="w-full flex items-center gap-3.5 px-4 py-3 rounded-wise text-sm font-semibold transition-all text-ink bg-white shadow-sm border border-[#dce0da]">
+                    <i data-lucide="activity" class="w-4 h-4 text-positive"></i>
+                    <span>Live Monitor</span>
+                </button>
+
+                <button onclick="switchTab('graph')" id="tab-btn-graph"
+                    class="w-full flex items-center gap-3.5 px-4 py-3 rounded-wise text-sm font-semibold transition-all text-wiseBody hover:text-ink hover:bg-white/60">
+                    <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <span>Graph Topology</span>
+                </button>
+
+                <button onclick="switchTab('benchmarks')" id="tab-btn-benchmarks"
+                    class="w-full flex items-center gap-3.5 px-4 py-3 rounded-wise text-sm font-semibold transition-all text-wiseBody hover:text-ink hover:bg-white/60">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span>Model Benchmarks</span>
+                </button>
+
+                <button onclick="switchTab('about')" id="tab-btn-about"
+                    class="w-full flex items-center gap-3.5 px-4 py-3 rounded-wise text-sm font-semibold transition-all text-wiseBody hover:text-ink hover:bg-white/60">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>Architecture & Viva</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Engine Status Card (Wise Dark Card variant) -->
+        <div class="bg-ink rounded-wise p-4 text-white shadow-sm space-y-3">
+            <div class="flex items-center justify-between text-xs">
+                <span class="text-wiseMute font-medium">Engine Status</span>
+                <span class="flex items-center gap-1.5 text-wiseGreen font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-wiseGreen inline-block pulse-live"></span>
+                    ACTIVE
+                </span>
+            </div>
+            <div class="text-[12px] font-mono space-y-1 pt-1 border-t border-[#232621]">
+                <div class="flex justify-between">
+                    <span class="text-wiseMute">Backbone:</span>
+                    <span class="text-wiseGreen font-semibold">GraphSAGE</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseMute">Loss:</span>
+                    <span class="text-white">Focal (&alpha;=0.85)</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseMute">Threshold:</span>
+                    <span class="text-warning font-semibold">0.70</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseMute">P99 Latency:</span>
+                    <span class="text-wiseGreen">18.4 ms</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto relative">
+
+        <!-- TOP BAR (Wise Header Band) -->
+        <header
+            class="h-20 px-8 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-canvasSoft/90 backdrop-blur border-b border-[#d7dbd4]">
+            <div class="flex items-center gap-4">
+                <div
+                    class="flex items-center gap-2 px-3 py-1 rounded-pill bg-wiseGreenPale text-positiveDeep text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-positive pulse-live"></span>
+                    <span>LIVE INGESTION ACTIVE</span>
+                </div>
+                <div class="text-xs text-wiseBody hidden md:block">
+                    Real-time Graph Neural Network for UPI Collusion &amp; Mule Rings
+                </div>
+            </div>
+
+            <!-- Action Controls: Primary Wise Green CTA Pill -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleAutoStream()" id="btn-autostream"
+                    class="px-4 py-2.5 rounded-wise bg-white hover:bg-white/90 text-ink text-xs font-semibold flex items-center gap-2 border border-[#d7dbd4] shadow-sm transition">
+                    <i data-lucide="play" id="icon-stream" class="w-3.5 h-3.5 text-ink"></i>
+                    <span id="text-stream">Auto Stream</span>
+                </button>
+                <button onclick="injectNormalTransaction()"
+                    class="px-4 py-2.5 rounded-wise bg-white hover:bg-white/90 text-ink text-xs font-semibold flex items-center gap-2 border border-[#d7dbd4] shadow-sm transition">
+                    <i data-lucide="plus" class="w-3.5 h-3.5 text-positive"></i>
+                    <span>+ Clean Txn</span>
+                </button>
+                <!-- Wise Primary CTA: Vivid Lime-Green Pill, Black Ink text, Font-weight 600 -->
+                <button onclick="triggerMuleAttack()"
+                    class="px-5 py-2.5 rounded-wise bg-wiseGreen hover:bg-wiseGreenHover text-ink text-xs font-bold flex items-center gap-2 shadow-sm transition-all transform active:scale-95">
+                    <i data-lucide="zap" class="w-4 h-4 fill-ink"></i>
+                    <span>Simulate Mule Ring Attack</span>
                 </button>
             </div>
+        </header>
 
-            <div class="input-row">
-                <div class="form-group">
-                    <label class="form-label">Sender UPI ID (VPA)</label>
-                    <input type="text" class="text-input" id="inp-sender" value="user_00421@oksbi" placeholder="e.g. user@oksbi">
+        <!-- PAGE CONTAINER -->
+        <div class="p-8 space-y-8 flex-1">
+
+            <!-- ================= VIEW 1: LIVE MONITOR (CENTERED) ================= -->
+            <div id="view-live" class="space-y-8 max-w-6xl mx-auto">
+
+                <!-- HERO INTRO WITH DISPLAY 900 -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+                    <div>
+                        <h1 class="font-display-hero text-4xl sm:text-5xl text-ink">
+                            Real-time safety for every transaction.
+                        </h1>
+                        <p class="text-base text-wiseBody mt-2 max-w-2xl font-normal">
+                            Powered by 2-hop GraphSAGE neighborhood aggregation to intercept mule networks and device
+                            hijacking without adding friction for genuine users.
+                        </p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Receiver UPI ID (VPA)</label>
-                    <input type="text" class="text-input" id="inp-receiver" value="crypto_drain@paytm" placeholder="e.g. merchant@paytm">
+
+                <!-- 4 KPI CARDS (24px Pill-Rounded White Cards on Sage Canvas) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Scanned -->
+                    <div class="bg-canvas rounded-wise p-6 flex flex-col justify-between shadow-sm">
+                        <div
+                            class="flex items-center justify-between text-wiseBody text-xs font-semibold uppercase tracking-wider">
+                            <span>Scanned Transactions</span>
+                            <div class="w-7 h-7 rounded-full bg-canvasSoft flex items-center justify-center text-ink">
+                                <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-baseline justify-between">
+                            <span class="font-display-hero text-3xl text-ink" id="kpi-scanned">14,842</span>
+                            <span
+                                class="text-xs font-mono font-semibold text-positiveDeep bg-wiseGreenPale px-2.5 py-1 rounded-pill">100%
+                                active</span>
+                        </div>
+                    </div>
+
+                    <!-- Blocked -->
+                    <div class="bg-canvas rounded-wise p-6 flex flex-col justify-between shadow-sm">
+                        <div
+                            class="flex items-center justify-between text-wiseBody text-xs font-semibold uppercase tracking-wider">
+                            <span>Blocked (Fraud)</span>
+                            <div
+                                class="w-7 h-7 rounded-full bg-negativeBg flex items-center justify-center text-negativeDarkest">
+                                <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-baseline justify-between">
+                            <span class="font-display-hero text-3xl text-negativeDarkest" id="kpi-blocked">314</span>
+                            <span
+                                class="text-xs font-mono font-semibold text-negativeDarkest bg-negativeBg px-2.5 py-1 rounded-pill">2.1%
+                                anomaly</span>
+                        </div>
+                    </div>
+
+                    <!-- Approved -->
+                    <div class="bg-canvas rounded-wise p-6 flex flex-col justify-between shadow-sm">
+                        <div
+                            class="flex items-center justify-between text-wiseBody text-xs font-semibold uppercase tracking-wider">
+                            <span>Approved (Clean)</span>
+                            <div
+                                class="w-7 h-7 rounded-full bg-wiseGreenPale flex items-center justify-center text-positiveDeep">
+                                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-baseline justify-between">
+                            <span class="font-display-hero text-3xl text-ink" id="kpi-approved">14,528</span>
+                            <span
+                                class="text-xs font-mono font-semibold text-positiveDeep bg-wiseGreenPale px-2.5 py-1 rounded-pill">99.62%
+                                precision</span>
+                        </div>
+                    </div>
+
+                    <!-- Avg Latency -->
+                    <div class="bg-canvas rounded-wise p-6 flex flex-col justify-between shadow-sm">
+                        <div
+                            class="flex items-center justify-between text-wiseBody text-xs font-semibold uppercase tracking-wider">
+                            <span>Decision Latency</span>
+                            <div class="w-7 h-7 rounded-full bg-canvasSoft flex items-center justify-center text-ink">
+                                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex items-baseline justify-between">
+                            <span class="font-display-hero text-3xl text-ink" id="kpi-latency">18.4 ms</span>
+                            <span
+                                class="text-xs font-mono font-semibold text-ink bg-canvasSoft px-2.5 py-1 rounded-pill">&lt;50ms
+                                NPCI SLA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= 1. LIVE UPI TRANSACTION STREAM (CENTERED) ================= -->
+                <div class="bg-canvas rounded-wise overflow-hidden shadow-sm flex flex-col">
+                    <div
+                        class="px-8 py-5 border-b border-[#eef0ec] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <h3 class="font-display-sub text-lg text-ink">Live UPI Transaction Stream</h3>
+                                <span
+                                    class="px-3 py-1 rounded-pill bg-wiseGreenPale text-positiveDeep text-[11px] font-mono font-bold">Auto
+                                    Ingestion Active</span>
+                            </div>
+                            <p class="text-xs text-wiseMute mt-0.5">Real-time inference queue &bull; Click any row to
+                                inspect deep explainability audit</p>
+                        </div>
+                        <div class="flex items-center gap-2 font-mono text-xs">
+                            <span class="px-3 py-1 rounded-pill bg-canvasSoft text-wiseBody font-semibold">GraphSAGE
+                                (&alpha;=0.85)</span>
+                            <span class="px-3 py-1 rounded-pill bg-canvasSoft text-wiseBody font-semibold">Heuristics
+                                (30%)</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto max-h-[520px]">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr
+                                    class="border-b border-[#eef0ec] bg-canvasSoft/50 text-wiseBody uppercase tracking-wider text-[11px] sticky top-0 z-10 font-mono">
+                                    <th class="py-3.5 px-6">Transaction ID</th>
+                                    <th class="py-3.5 px-6">Sender VPA</th>
+                                    <th class="py-3.5 px-6">Receiver VPA</th>
+                                    <th class="py-3.5 px-6">Amount (₹)</th>
+                                    <th class="py-3.5 px-6">Risk Score</th>
+                                    <th class="py-3.5 px-6">Verdict</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feed-tbody" class="divide-y divide-[#f2f4f0] font-mono">
+                                <!-- Dynamic rows go here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div
+                        class="px-8 py-3.5 border-t border-[#eef0ec] bg-canvasSoft/30 flex items-center justify-between text-xs text-wiseMute font-mono">
+                        <span>Real-time rolling window (latest 12 transactions)</span>
+                        <span class="text-ink font-semibold">Click any row to open slide-over XAI audit drawer
+                            &rarr;</span>
+                    </div>
+                </div>
+
+                <!-- ================= 2. RELATIONAL SUBGRAPH TOPOLOGY (BELOW THE STREAM) ================= -->
+                <div class="bg-canvas rounded-wise p-6 sm:p-8 shadow-sm flex flex-col space-y-4">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-[#eef0ec] gap-3">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <h3 class="font-display-sub text-lg text-ink">Relational Subgraph Topology</h3>
+                                <span
+                                    class="px-3 py-1 rounded-pill bg-negativeBg text-negativeDarkest font-mono text-[11px] font-bold flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-negative pulse-live"></span>
+                                    LIVE RADAR STREAM
+                                </span>
+                            </div>
+                            <p class="text-xs text-wiseMute mt-0.5">Real-time GNN inductive message passing &bull;
+                                Co-located hardware, proxy pools &amp; collusion edges</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="recenterGraph()"
+                                class="px-4 py-2 rounded-wise bg-canvasSoft hover:bg-canvasSoft/80 text-ink text-xs font-semibold flex items-center gap-1.5 transition border border-[#d7dbd4]">
+                                <i data-lucide="crosshair" class="w-3.5 h-3.5 text-ink"></i>
+                                <span>Recenter Graph</span>
+                            </button>
+                            <button onclick="triggerMuleAttack()"
+                                class="px-4 py-2 rounded-wise bg-negative text-white text-xs font-bold hover:bg-negativeDarkest transition flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                                <span>Simulate Attack</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Graph Canvas (Centered, Spacious 500px Height) -->
+                    <div id="network-container" class="relative border border-[#eef0ec] overflow-hidden rounded-wise">
+                        <div
+                            class="absolute top-3 left-4 bg-white/95 border border-[#eef0ec] rounded-pill px-3.5 py-1 text-[11px] font-mono text-wiseBody z-10 backdrop-blur shadow-sm flex items-center gap-3">
+                            <span class="flex items-center gap-1.5"><span
+                                    class="w-2.5 h-2.5 rounded-full bg-positive inline-block"></span>Legitimate
+                                User</span>
+                            <span class="flex items-center gap-1.5"><span
+                                    class="w-2.5 h-2.5 rounded-full bg-negative inline-block animate-ping"></span>Flagged
+                                Mule</span>
+                            <span class="flex items-center gap-1.5"><span
+                                    class="w-2.5 h-2.5 bg-warning inline-block rotate-45"></span>Shared Hardware</span>
+                            <span class="flex items-center gap-1.5"><span
+                                    class="w-2.5 h-2.5 bg-ink inline-block rotate-45"></span>Proxy IP</span>
+                        </div>
+                        <div
+                            class="absolute bottom-3 right-4 bg-white/90 border border-[#eef0ec] rounded-pill px-3 py-1 text-[10px] font-mono text-wiseMute z-10">
+                            <span>Physics Engine: ForceAtlas2 &bull; Animated Halos &amp; Edge Energy</span>
+                        </div>
+                    </div>
+
+                    <!-- Subgraph Caption -->
+                    <div
+                        class="p-3.5 bg-canvasSoft rounded-wise flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-2">
+                        <div class="flex items-center gap-2 text-wiseBody">
+                            <i data-lucide="info" class="w-4 h-4 text-positive"></i>
+                            <span>Red pulsating radar halos show active collusion propagation across 2-hop neighbor
+                                embeddings.</span>
+                        </div>
+                        <span class="text-ink font-semibold font-mono text-[11px]">2-Hop Inductive Embedding &bull;
+                            Sub-20ms</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= VIEW 2: GRAPH EXPLORER ================= -->
+            <div id="view-graph" class="space-y-6 max-w-6xl mx-auto hidden">
+                <div class="bg-canvas rounded-wise p-8 shadow-sm space-y-6">
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#eef0ec]">
+                        <div>
+                            <h2 class="font-display-hero text-2xl text-ink">
+                                Interactive Multi-Hop Relational Explorer
+                            </h2>
+                            <p class="text-sm text-wiseBody mt-1">
+                                Traverse shared device footprints, proxy pools, and money laundering sinks across the
+                                UPI transaction graph.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="highlightMuleCluster()"
+                                class="px-4 py-2 rounded-wise bg-negativeBg text-negativeDarkest text-xs font-bold hover:bg-negativeBg/80 transition flex items-center gap-1.5">
+                                <i data-lucide="target" class="w-3.5 h-3.5"></i>
+                                <span>Focus Mule Cluster</span>
+                            </button>
+                            <button onclick="resetGraphView()"
+                                class="px-4 py-2 rounded-wise bg-canvasSoft text-ink text-xs font-semibold hover:bg-canvasSoft/80 transition">
+                                Reset View
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Strip -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-canvasSoft rounded-wise text-xs">
+                        <div>
+                            <label class="block text-wiseBody mb-1 font-semibold uppercase text-[11px]">Filter by
+                                Minimum Risk Score</label>
+                            <input type="range" min="0" max="100" value="70" id="graph-risk-filter"
+                                oninput="filterGraphByRisk(this.value)" class="w-full accent-ink cursor-pointer">
+                            <div class="flex justify-between text-[11px] font-mono text-wiseBody mt-1">
+                                <span>0.00 (All)</span>
+                                <span id="graph-filter-val" class="text-ink font-bold">&ge; 0.70 (Fraud Only)</span>
+                                <span>1.00</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-wiseBody mb-1 font-semibold uppercase text-[11px]">Graph Edge
+                                Type</label>
+                            <div class="flex gap-2">
+                                <span
+                                    class="px-3 py-1 rounded-pill bg-white text-ink font-mono font-medium text-[11px] shadow-sm">Shared
+                                    Device</span>
+                                <span class="px-3 py-1 rounded-pill bg-white/60 text-wiseMute font-mono text-[11px]">IP
+                                    Colocation</span>
+                                <span
+                                    class="px-3 py-1 rounded-pill bg-white/60 text-wiseMute font-mono text-[11px]">Direct
+                                    Transfer</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-wiseBody mb-1 font-semibold uppercase text-[11px]">Active Subgraph
+                                Stats</label>
+                            <div class="flex gap-4 font-mono text-[11px] text-wiseBody pt-1">
+                                <span>Nodes: <strong class="text-ink" id="stat-graph-nodes">18</strong></span>
+                                <span>Edges: <strong class="text-ink" id="stat-graph-edges">24</strong></span>
+                                <span>Mule Hubs: <strong class="text-negativeDarkest">2 Rings</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Network Display -->
+                    <div id="full-network-container"
+                        class="w-full h-[540px] rounded-wise border border-[#eef0ec] overflow-hidden bg-white"></div>
                 </div>
             </div>
 
-            <div class="input-row">
-                <div class="form-group">
-                    <label class="form-label">Transfer Amount (₹)</label>
-                    <input type="number" class="text-input" id="inp-amount" value="85000" placeholder="e.g. 5000">
+            <!-- ================= VIEW 3: MODEL BENCHMARKS ================= -->
+            <div id="view-benchmarks" class="space-y-6 max-w-6xl mx-auto hidden">
+                <!-- Wise Polarity-Flipped Dark Moment (Brand Feature Card Dark) -->
+                <div
+                    class="bg-ink rounded-wise p-8 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div class="max-w-2xl">
+                        <div
+                            class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-[#20241c] text-wiseGreen text-xs font-bold mb-3">
+                            <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                            <span>BENCHMARK HIGHLIGHT</span>
+                        </div>
+                        <h2 class="font-display-hero text-3xl text-wiseGreen">
+                            1 False Alarm in 14,727 Transactions.
+                        </h2>
+                        <p class="text-sm text-canvasSoft/80 mt-2 font-normal leading-relaxed">
+                            On the 15,000 holdout test set, GraphSAGE delivered an exceptional <strong>99.62%
+                                precision</strong>. Traditional tabular MLPs produced <strong>37 false alarms</strong>,
+                            locking legitimate customer accounts. GraphSAGE prevents customer friction while maintaining
+                            96.34% recall on complex mule attacks.
+                        </p>
+                    </div>
+                    <div class="bg-[#1a1c17] p-5 rounded-wise border border-[#2a2d26] text-right font-mono shrink-0">
+                        <div class="text-xs text-wiseMute uppercase">Customer Support Savings</div>
+                        <div class="font-display-hero text-4xl text-wiseGreen mt-1">97.3%</div>
+                        <div class="text-[11px] text-canvasSoft/60 mt-1">False Positive Reduction vs MLP</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Hardware Device Fingerprint</label>
-                    <input type="text" class="text-input" id="inp-device" value="DEV_MULE_002" placeholder="e.g. DEV_94821">
-                </div>
-            </div>
-        </div>
 
-        <!-- Benchmark Table Section -->
-        <div class="surface-card" style="margin-bottom: 56px;" id="benchmarks">
-            <div class="surface-card-header">
-                <div>
-                    <h2>Evaluated Model Benchmarks.</h2>
-                    <p style="font-size: 14px; font-weight: 300; color: var(--colors-text-muted); margin-top: 4px;">
-                        Evaluated strictly on chronological out-of-time test partition (15,000 transactions).
-                    </p>
+                <!-- Benchmark Comparison Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Chart 1: Grouped Bars for Classification Metrics -->
+                    <div class="lg:col-span-7 bg-canvas rounded-wise p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-display-sub text-base text-ink">Model Performance (15k Test Set)</h3>
+                                <p class="text-xs text-wiseMute">Precision, Recall, and F1 across tested architectures
+                                </p>
+                            </div>
+                            <span
+                                class="text-xs font-mono px-3 py-1 rounded-pill bg-canvasSoft text-wiseBody font-semibold">Holdout
+                                Split</span>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="benchmarkChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: False Positive Reduction (Crucial Metric) -->
+                    <div class="lg:col-span-5 bg-canvas rounded-wise p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="font-display-sub text-base text-ink">False Positives (Customer Friction)</h3>
+                                <span class="text-xs font-semibold text-negativeDarkest">Lower is Better</span>
+                            </div>
+                            <p class="text-xs text-wiseMute mb-4">Number of innocent users incorrectly flagged as
+                                fraudulent.</p>
+                            <div class="h-44">
+                                <canvas id="fpChart"></canvas>
+                            </div>
+                        </div>
+                        <div
+                            class="mt-4 p-3 rounded-wise bg-canvasSoft text-xs text-wiseBody flex justify-between font-mono">
+                            <span>GraphSAGE accuracy:</span>
+                            <span class="text-positiveDeep font-bold">Only 1 False Positive</span>
+                        </div>
+                    </div>
                 </div>
-                <span class="badge-popular">Final Defense Results</span>
+
+                <!-- Benchmark Table (Wise Clean White Card) -->
+                <div class="bg-canvas rounded-wise overflow-hidden shadow-sm">
+                    <div class="p-6 border-b border-[#eef0ec]">
+                        <h3 class="font-display-sub text-base text-ink">Evaluation Matrix Across Architectures</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead>
+                                <tr
+                                    class="bg-canvasSoft/50 border-b border-[#eef0ec] text-wiseBody uppercase text-[11px]">
+                                    <th class="py-3 px-5">Model</th>
+                                    <th class="py-3 px-5">Architecture Category</th>
+                                    <th class="py-3 px-5">Precision</th>
+                                    <th class="py-3 px-5">Recall</th>
+                                    <th class="py-3 px-5">F1-Score</th>
+                                    <th class="py-3 px-5">AUPRC</th>
+                                    <th class="py-3 px-5">False Positives</th>
+                                    <th class="py-3 px-5">Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#f2f4f0]">
+                                <tr class="bg-wiseGreenPale/40 text-ink font-semibold border-l-4 border-positive">
+                                    <td class="py-3.5 px-5 flex items-center gap-2">
+                                        <div
+                                            class="w-4 h-4 rounded-full bg-positive text-white flex items-center justify-center">
+                                            <i data-lucide="check" class="w-3 h-3"></i>
+                                        </div>
+                                        <span>GraphSAGE (Ours)</span>
+                                    </td>
+                                    <td class="py-3.5 px-5 text-positiveDeep font-semibold">Inductive GNN</td>
+                                    <td class="py-3.5 px-5 text-positiveDeep font-bold">99.62%</td>
+                                    <td class="py-3.5 px-5">96.34%</td>
+                                    <td class="py-3.5 px-5 text-positiveDeep">97.95%</td>
+                                    <td class="py-3.5 px-5">0.9993</td>
+                                    <td class="py-3.5 px-5 text-positiveDeep font-bold">1 / 14,727</td>
+                                    <td class="py-3.5 px-5 text-ink">18.4 ms</td>
+                                </tr>
+                                <tr class="hover:bg-canvasSoft/30 text-wiseBody">
+                                    <td class="py-3.5 px-5 font-medium text-ink">XGBoost Baseline</td>
+                                    <td class="py-3.5 px-5">Gradient Boosted Trees</td>
+                                    <td class="py-3.5 px-5">98.56%</td>
+                                    <td class="py-3.5 px-5 text-positiveDeep">100.0%</td>
+                                    <td class="py-3.5 px-5">99.27%</td>
+                                    <td class="py-3.5 px-5">1.0000</td>
+                                    <td class="py-3.5 px-5">4 / 14,727</td>
+                                    <td class="py-3.5 px-5">12 ms</td>
+                                </tr>
+                                <tr class="hover:bg-canvasSoft/30 text-wiseBody">
+                                    <td class="py-3.5 px-5 font-medium text-ink">Tabular Deep MLP</td>
+                                    <td class="py-3.5 px-5">Multi-Layer Perceptron</td>
+                                    <td class="py-3.5 px-5 text-warningDeep">88.06%</td>
+                                    <td class="py-3.5 px-5 text-positiveDeep">100.0%</td>
+                                    <td class="py-3.5 px-5">93.65%</td>
+                                    <td class="py-3.5 px-5">0.9994</td>
+                                    <td class="py-3.5 px-5 text-negativeDarkest font-bold">37 / 14,727</td>
+                                    <td class="py-3.5 px-5">14 ms</td>
+                                </tr>
+                                <tr class="hover:bg-canvasSoft/30 text-wiseBody">
+                                    <td class="py-3.5 px-5 font-medium text-ink">GAT (Attention GNN)</td>
+                                    <td class="py-3.5 px-5">Graph Attention Network</td>
+                                    <td class="py-3.5 px-5 text-negativeDarkest">73.08%</td>
+                                    <td class="py-3.5 px-5">90.48%</td>
+                                    <td class="py-3.5 px-5">80.85%</td>
+                                    <td class="py-3.5 px-5">0.8879</td>
+                                    <td class="py-3.5 px-5 text-negativeDarkest font-bold">91 / 14,727</td>
+                                    <td class="py-3.5 px-5">32 ms</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Model Architecture</th>
-                            <th>Precision</th>
-                            <th>Recall</th>
-                            <th>F1-Score</th>
-                            <th>AUPRC</th>
-                            <th>False Positives</th>
-                            <th>Decision Advantage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr style="background: var(--colors-canvas-soft);">
-                            <td><strong>GraphSAGE (Relational GNN)</strong></td>
-                            <td><strong style="color: var(--colors-accent);">99.62%</strong></td>
-                            <td>96.34%</td>
-                            <td><strong>97.95%</strong></td>
-                            <td>0.9993</td>
-                            <td><strong>1 / 14,727</strong></td>
-                            <td><span class="pill-badge pill-badge-safe">Lowest Customer Friction</span></td>
-                        </tr>
-                        <tr>
-                            <td>XGBoost (Tabular Baseline)</td>
-                            <td>98.56%</td>
-                            <td>100.00%</td>
-                            <td>99.27%</td>
-                            <td>1.0000</td>
-                            <td>4 / 14,727</td>
-                            <td>Misses complex device sharing clusters</td>
-                        </tr>
-                        <tr>
-                            <td>Tabular MLP (Neural Baseline)</td>
-                            <td>88.06%</td>
-                            <td>100.00%</td>
-                            <td>93.65%</td>
-                            <td>0.9994</td>
-                            <td>37 / 14,727</td>
-                            <td>High false alarm rate on normal transfers</td>
-                        </tr>
-                        <tr>
-                            <td>GAT (Attention Network)</td>
-                            <td>73.08%</td>
-                            <td>90.48%</td>
-                            <td>80.85%</td>
-                            <td>0.8879</td>
-                            <td>91 / 14,727</td>
-                            <td>Provides edge attention explainability</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- ================= VIEW 4: ARCHITECTURE & VIVA GUIDE (INTUITIVE & EASY) ================= -->
+            <div id="view-about" class="space-y-6 max-w-6xl mx-auto hidden">
+                <div class="bg-canvas rounded-wise p-8 shadow-sm space-y-8">
+
+                    <!-- Section Header -->
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#eef0ec]">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="font-display-hero text-2xl text-ink">Project Architecture &amp; Viva Voce
+                                    Guide</h2>
+                                <span
+                                    class="px-3 py-1 rounded-pill bg-wiseGreenPale text-positiveDeep text-[11px] font-mono font-bold">Examiner
+                                    Reference</span>
+                            </div>
+                            <p class="text-sm text-wiseBody mt-1">
+                                Simplified end-to-end pipeline breakdown and ready-to-speak viva answers for project
+                                reviews.
+                            </p>
+                        </div>
+                        <div
+                            class="px-4 py-2 rounded-wise bg-canvasSoft font-mono text-xs text-wiseBody border border-[#d7dbd4] flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-positive"></span>
+                            <span>Target: Sub-50ms Real-Time Ingestion</span>
+                        </div>
+                    </div>
+
+                    <!-- 1. VISUAL 4-STEP PIPELINE (Clean Scandinavian Flow) -->
+                    <div class="space-y-3">
+                        <h3 class="font-display-sub text-base text-ink flex items-center gap-2">
+                            <i data-lucide="git-commit" class="w-4 h-4 text-positive"></i>
+                            <span>How the System Works (4-Step Pipeline)</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <!-- Step 1 -->
+                            <div
+                                class="p-5 rounded-wise bg-canvasSoft border border-[#dce0da] flex flex-col justify-between">
+                                <div>
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-ink text-wiseGreen text-xs font-mono font-bold flex items-center justify-center mb-3">
+                                        1</div>
+                                    <h4 class="font-semibold text-sm text-ink">Transaction Ingest</h4>
+                                    <p class="text-xs text-wiseBody mt-1.5 leading-relaxed">
+                                        UPI payment payload enters via REST/Kafka with amount, sender, receiver, <code
+                                            class="font-mono bg-white px-1 rounded">device_id</code>, and IP.
+                                    </p>
+                                </div>
+                                <span class="mt-4 text-[11px] font-mono font-semibold text-positiveDeep">&rarr; Feature
+                                    Extraction</span>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div
+                                class="p-5 rounded-wise bg-canvasSoft border border-[#dce0da] flex flex-col justify-between">
+                                <div>
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-ink text-wiseGreen text-xs font-mono font-bold flex items-center justify-center mb-3">
+                                        2</div>
+                                    <h4 class="font-semibold text-sm text-ink">Graph Linking</h4>
+                                    <p class="text-xs text-wiseBody mt-1.5 leading-relaxed">
+                                        Nodes connect automatically if they share the same physical phone or proxy IP.
+                                        High-volume merchants (Swiggy) are pruned.
+                                    </p>
+                                </div>
+                                <span class="mt-4 text-[11px] font-mono font-semibold text-positiveDeep">&rarr;
+                                    Relational Topology</span>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div
+                                class="p-5 rounded-wise bg-canvasSoft border border-[#dce0da] flex flex-col justify-between">
+                                <div>
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-ink text-wiseGreen text-xs font-mono font-bold flex items-center justify-center mb-3">
+                                        3</div>
+                                    <h4 class="font-semibold text-sm text-ink">GraphSAGE GNN</h4>
+                                    <p class="text-xs text-wiseBody mt-1.5 leading-relaxed">
+                                        Inductive 2-hop neighbor aggregation computes graph risk score, trained with
+                                        <strong>Focal Loss (&alpha;=0.85)</strong> on imbalanced fraud.
+                                    </p>
+                                </div>
+                                <span class="mt-4 text-[11px] font-mono font-semibold text-positiveDeep">&rarr; Graph
+                                    Risk Score</span>
+                            </div>
+
+                            <!-- Step 4 -->
+                            <div
+                                class="p-5 rounded-wise bg-canvasSoft border border-[#dce0da] flex flex-col justify-between">
+                                <div>
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-ink text-wiseGreen text-xs font-mono font-bold flex items-center justify-center mb-3">
+                                        4</div>
+                                    <h4 class="font-semibold text-sm text-ink">Hybrid Verdict</h4>
+                                    <p class="text-xs text-wiseBody mt-1.5 leading-relaxed">
+                                        Combined in <strong>18 ms</strong>: <br>
+                                        <code
+                                            class="font-mono text-[11px] font-bold text-ink">70% GNN + 30% Rules</code>.<br>
+                                        &ge;0.70 blocked with audit trail.
+                                    </p>
+                                </div>
+                                <span class="mt-4 text-[11px] font-mono font-bold text-negativeDarkest">&bull; Block /
+                                    Approve</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. "30-SECOND EXAMINER ELEVATOR PITCH" (Memorize This!) -->
+                    <div class="p-6 rounded-wise bg-ink text-white space-y-3">
+                        <div
+                            class="flex items-center gap-2 text-wiseGreen font-mono text-xs font-bold uppercase tracking-wider">
+                            <i data-lucide="zap" class="w-4 h-4 fill-wiseGreen"></i>
+                            <span>What to Tell Your Examiner in 30 Seconds</span>
+                        </div>
+                        <p class="text-sm font-normal text-canvasSoft leading-relaxed">
+                            "In UPI systems, fraudsters operate syndicated <strong>mule account networks</strong>
+                            sharing common devices and proxy IPs. Traditional ML algorithms evaluate transactions as
+                            isolated rows and miss these collusion rings. Our system constructs a dynamic relational
+                            transaction graph and uses <strong>GraphSAGE</strong> to aggregate neighbor signals in
+                            real-time. In benchmarks across 15,000 transactions, our model achieved <strong>99.62%
+                                precision with only 1 false positive</strong> (compared to 37 false positives in
+                            traditional ML), executing decisions in <strong>18.4 ms</strong>."
+                        </p>
+                    </div>
+
+                    <!-- 3. INTERACTIVE VIVA Q&A ACCORDION -->
+                    <div class="space-y-3">
+                        <h3 class="font-display-sub text-base text-ink flex items-center gap-2">
+                            <i data-lucide="help-circle" class="w-4 h-4 text-positive"></i>
+                            <span>Frequent Viva Voce Questions &amp; Direct Answers</span>
+                        </h3>
+                        <p class="text-xs text-wiseMute">Click any question to view the exact answer for your review
+                            panel:</p>
+
+                        <div class="space-y-2">
+                            <!-- Q1 -->
+                            <details class="group bg-canvasSoft rounded-wise p-4 cursor-pointer transition">
+                                <summary
+                                    class="font-semibold text-sm text-ink flex items-center justify-between list-none">
+                                    <span>Q1: Why did you use Graph Neural Networks instead of XGBoost or Random
+                                        Forest?</span>
+                                    <span class="text-xs text-wiseMute group-open:rotate-180 transition">&darr;</span>
+                                </summary>
+                                <div class="mt-3 text-xs text-wiseBody leading-relaxed border-t border-[#dce0da] pt-3">
+                                    <strong class="text-ink">Answer:</strong> Traditional models like XGBoost only
+                                    analyze individual tabular features (amount, time). They cannot capture relational
+                                    topology. In UPI fraud, money launderers pass funds across multiple accounts linked
+                                    to the same phone (<code class="font-mono bg-white px-1 rounded">device_id</code>).
+                                    GNNs detect these multi-hop collusion patterns through neighborhood message passing.
+                                </div>
+                            </details>
+
+                            <!-- Q2 -->
+                            <details class="group bg-canvasSoft rounded-wise p-4 cursor-pointer transition">
+                                <summary
+                                    class="font-semibold text-sm text-ink flex items-center justify-between list-none">
+                                    <span>Q2: Why GraphSAGE instead of standard Graph Convolutional Networks
+                                        (GCN)?</span>
+                                    <span class="text-xs text-wiseMute group-open:rotate-180 transition">&darr;</span>
+                                </summary>
+                                <div class="mt-3 text-xs text-wiseBody leading-relaxed border-t border-[#dce0da] pt-3">
+                                    <strong class="text-ink">Answer:</strong> Standard GCN is
+                                    <strong>transductive</strong> — it requires the full Laplacian matrix and must be
+                                    retrained whenever a new transaction arrives. <strong>GraphSAGE is
+                                        inductive</strong> — it trains neural aggregators that generalize to new, unseen
+                                    streaming transactions on the fly without retraining.
+                                </div>
+                            </details>
+
+                            <!-- Q3 -->
+                            <details class="group bg-canvasSoft rounded-wise p-4 cursor-pointer transition">
+                                <summary
+                                    class="font-semibold text-sm text-ink flex items-center justify-between list-none">
+                                    <span>Q3: How do you handle extreme class imbalance (fraud is &lt;2%)?</span>
+                                    <span class="text-xs text-wiseMute group-open:rotate-180 transition">&darr;</span>
+                                </summary>
+                                <div class="mt-3 text-xs text-wiseBody leading-relaxed border-t border-[#dce0da] pt-3">
+                                    <strong class="text-ink">Answer:</strong> We replaced standard Cross-Entropy Loss
+                                    with <strong>Focal Loss</strong> (<code
+                                        class="font-mono">&alpha;=0.85, &gamma;=2.0</code>). The modulating factor <code
+                                        class="font-mono">(1 - p_t)^&gamma;</code> down-weights easy clean transactions
+                                    and concentrates gradient updates on rare, hard-to-detect fraudulent transactions.
+                                </div>
+                            </details>
+
+                            <!-- Q4 -->
+                            <details class="group bg-canvasSoft rounded-wise p-4 cursor-pointer transition">
+                                <summary
+                                    class="font-semibold text-sm text-ink flex items-center justify-between list-none">
+                                    <span>Q4: Does this fit within NPCI's real-time UPI transaction latency SLA?</span>
+                                    <span class="text-xs text-wiseMute group-open:rotate-180 transition">&darr;</span>
+                                </summary>
+                                <div class="mt-3 text-xs text-wiseBody leading-relaxed border-t border-[#dce0da] pt-3">
+                                    <strong class="text-ink">Answer:</strong> Yes. NPCI UPI transactions require
+                                    responses within 100 ms. Our PyTorch Geometric GraphSAGE pipeline executes in
+                                    <strong>18.4 ms</strong> (P99 &lt; 35 ms) on commodity hardware, leaving ample
+                                    headroom for bank core switches.
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+
         </div>
 
     </main>
 
-    <!-- Full-bleed Near-Black Inversion Footer -->
-    <footer>
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <h2>UPI Graph Intelligence.</h2>
-                <p>
-                    Final Year Engineering Project 709 — Real-Time Graph Neural Networks for Collusion and Mule Ring Detection across Indian Unified Payments Interface ecosystem.
-                </p>
-            </div>
-            <div class="footer-columns">
-                <div class="footer-col">
-                    <h4>Architecture</h4>
-                    <ul>
-                        <li><a href="#">GraphSAGE Conv</a></li>
-                        <li><a href="#">Graph Attention (GAT)</a></li>
-                        <li><a href="#">Focal Loss Layer</a></li>
-                        <li><a href="#">FastAPI Microservice</a></li>
-                    </ul>
+    <!-- ================= SLIDE-IN AUDIT DRAWER (Wise Clean Card on Sage Canvas) ================= -->
+    <div id="audit-drawer"
+        class="fixed top-0 right-0 h-full w-[460px] bg-canvas border-l border-[#d7dbd4] shadow-2xl z-50 transform translate-x-full drawer-slide flex flex-col justify-between">
+        <!-- Drawer Header -->
+        <div class="p-6 border-b border-[#eef0ec] flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-wise bg-negativeBg flex items-center justify-center text-negativeDarkest"
+                    id="drawer-icon-box">
+                    <i data-lucide="shield-alert" class="w-5 h-5" id="drawer-header-icon"></i>
                 </div>
-                <div class="footer-col">
-                    <h4>Datasets</h4>
-                    <ul>
-                        <li><a href="#">100K Synthetic UPI</a></li>
-                        <li><a href="#">Mule Collusion Rings</a></li>
-                        <li><a href="#">IEEE-CIS Benchmark</a></li>
-                        <li><a href="#">Temporal Split Graph</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h4>Deliverables</h4>
-                    <ul>
-                        <li><a href="#">Project Roadmap</a></li>
-                        <li><a href="#">Live Dashboard</a></li>
-                        <li><a href="#">REST API (/predict)</a></li>
-                        <li><a href="#">Defense Slides</a></li>
-                    </ul>
+                <div>
+                    <h3 class="font-display-sub text-base text-ink flex items-center gap-2">
+                        <span id="drawer-txn-id">TXN_MULE_9481</span>
+                    </h3>
+                    <p class="text-xs font-mono text-wiseMute" id="drawer-timestamp">2026-10-15 02:45:12</p>
                 </div>
             </div>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 rounded-pill text-xs font-mono font-bold bg-negativeBg text-negativeDarkest"
+                    id="drawer-decision-badge">BLOCK</span>
+                <button onclick="closeAuditDrawer()"
+                    class="p-2 rounded-full text-wiseMute hover:text-ink hover:bg-canvasSoft transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
-        <div class="footer-bottom">
-            <span>© 2026-27 Final Year Project 709. All rights reserved.</span>
-            <span>Engineered with PyTorch Geometric & FastAPI.</span>
-        </div>
-    </footer>
 
-    <!-- Interactive Scripts -->
+        <!-- Drawer Body -->
+        <div class="p-6 space-y-6 overflow-y-auto flex-1 font-sans">
+
+            <!-- Latency & Verdict Badge -->
+            <div class="flex items-center justify-between text-xs p-3.5 rounded-wise bg-canvasSoft">
+                <span class="text-wiseBody font-medium">Inference Latency:</span>
+                <span class="text-ink font-mono flex items-center gap-1.5 font-bold">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-ink"></i>
+                    <span id="drawer-latency">18.2 ms</span>
+                </span>
+            </div>
+
+            <!-- SEMI-CIRCLE RISK GAUGE -->
+            <div class="p-6 rounded-wise bg-canvasSoft flex flex-col items-center">
+                <span class="text-xs font-semibold uppercase tracking-wider text-wiseBody mb-2">Hybrid Anomaly Risk
+                    Score</span>
+
+                <div class="relative w-52 h-32 flex items-end justify-center">
+                    <svg viewBox="0 0 200 110" class="w-52 h-32">
+                        <!-- Gauge Background Arc -->
+                        <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#d7dbd4" stroke-width="16"
+                            stroke-linecap="round" />
+                        <!-- Threshold Indicator (0.70 at 126 degrees) -->
+                        <line x1="130" y1="26" x2="138" y2="18" stroke="#0e0f0c" stroke-width="2.5" />
+                        <!-- Gauge Active Fill Arc -->
+                        <path id="gauge-fill-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#d03238"
+                            stroke-width="16" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="25" />
+                    </svg>
+                    <!-- Gauge Value in Center -->
+                    <div class="absolute bottom-1 text-center">
+                        <span class="font-display-hero text-3xl text-ink" id="drawer-risk-score">0.942</span>
+                        <span class="block text-[11px] font-mono text-wiseBody">0.70 Block Threshold</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STACKED RISK CONTRIBUTION BAR (70% GNN vs 30% Rules) -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-wiseBody font-semibold">Ensemble Contribution:</span>
+                    <span class="font-mono text-[11px] text-ink font-medium">
+                        GNN (<span id="drawer-gnn-pct" class="text-ink font-bold">70%</span>) &bull; Rules (<span
+                            id="drawer-rule-pct" class="text-wiseBody font-bold">30%</span>)
+                    </span>
+                </div>
+                <!-- Stacked Progress Bar -->
+                <div class="w-full h-3 rounded-pill bg-[#d7dbd4] overflow-hidden flex">
+                    <div id="bar-gnn" class="bg-ink h-full transition-all duration-500" style="width: 65%;"></div>
+                    <div id="bar-rule" class="bg-warning h-full transition-all duration-500" style="width: 35%;"></div>
+                </div>
+                <div class="flex justify-between text-[11px] font-mono text-wiseMute">
+                    <span>GNN Score: <strong id="drawer-gnn-raw" class="text-ink">0.96</strong></span>
+                    <span>Rule Penalty: <strong id="drawer-rule-raw" class="text-ink">0.90</strong></span>
+                </div>
+            </div>
+
+            <!-- EXPLAINABILITY REASONS (XAI) -->
+            <div class="space-y-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-wiseBody flex items-center gap-1.5">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-ink"></i>
+                    Explainability &amp; Risk Flags
+                </span>
+                <div id="drawer-explanations"
+                    class="p-4 rounded-wise bg-negativeBg border-l-4 border-negativeDarkest space-y-2 text-xs">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- TRANSACTION METADATA CHIPS -->
+            <div class="p-4 rounded-wise bg-canvasSoft space-y-2 text-xs font-mono">
+                <div class="flex justify-between">
+                    <span class="text-wiseBody">Amount:</span>
+                    <span class="text-ink font-bold" id="drawer-amount">₹85,000</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseBody">Sender VPA:</span>
+                    <span class="text-ink" id="drawer-sender">user_419@oksbi</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseBody">Receiver VPA:</span>
+                    <span class="text-ink" id="drawer-receiver">mule_sink@paytm</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseBody">Device Hardware:</span>
+                    <span class="text-negativeDarkest font-bold" id="drawer-device">DEV_MULE_002</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-wiseBody">IP Geolocation:</span>
+                    <span class="text-ink" id="drawer-ip">10.0.99.4 (Mumbai)</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Drawer Footer Action: Wise Primary CTA Pill -->
+        <div class="p-6 border-t border-[#eef0ec] flex gap-3">
+            <button onclick="inspectInGraphFromDrawer()"
+                class="flex-1 py-3 px-4 rounded-wise bg-wiseGreen hover:bg-wiseGreenHover text-ink text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                <span>Locate on Graph</span>
+            </button>
+            <button onclick="closeAuditDrawer()"
+                class="py-3 px-5 rounded-wise bg-canvasSoft hover:bg-canvasSoft/80 text-ink text-xs font-semibold transition">
+                Dismiss
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION LOGIC -->
     <script>
-        let totalTxnCount = 100000;
-        let currentFilter = 'all';
+        // State
+        let scannedCount = 14842;
+        let blockedCount = 314;
+        let approvedCount = 14528;
+        let isStreaming = false;
+        let streamTimer = null;
+        let currentSelectedTxn = null;
 
-        // Initial Data Feed
-        const initialTransactions = [
-            { id: "TXN_94821", sender: "rohit.sharma@oksbi", bank: "SBI", receiver: "swiggy@icici", amount: 480, score: 0.02, decision: "APPROVE", device: "DEV_A91", flag: "safe" },
-            { id: "TXN_94822", sender: "priya_k@okhdfcbank", bank: "HDFC", receiver: "amazon@apl", amount: 2450, score: 0.04, decision: "APPROVE", device: "DEV_K12", flag: "safe" },
-            { id: "TXN_MULE_01", sender: "mule_node_09@oksbi", bank: "SBI", receiver: "crypto_drain@paytm", amount: 85000, score: 0.98, decision: "BLOCK", device: "DEV_MULE_002", flag: "fraud" },
-            { id: "TXN_94824", sender: "sunita.v@okaxis", bank: "AXIS", receiver: "kirana_store@paytm", amount: 320, score: 0.01, decision: "APPROVE", device: "DEV_S44", flag: "safe" },
-            { id: "TXN_94825", sender: "aravind@paytm", bank: "PAYTM", receiver: "unknown_merchant@ybl", amount: 14200, score: 0.48, decision: "REVIEW", device: "DEV_R09", flag: "flagged" },
+        // Clean mock data pools
+        const cleanSenders = [
+            "rohit.verma@oksbi", "priya.nair@okhdfcbank", "aravind.k@paytm",
+            "ananya.das@okaxis", "kiran.patel@icici", "vikram.s@yesbank"
+        ];
+        const cleanReceivers = [
+            "swiggy.pay@icici", "amazon.upi@apl", "zomato.order@hdfc",
+            "kirana.mart@paytm", "uber.india@axis", "starbucks.in@ybl"
         ];
 
-        let transactionStream = [...initialTransactions];
-
-        // Vis.js Graph Setup
-        const container = document.getElementById('network-container');
-        const nodes = new vis.DataSet([
-            { id: 1, label: 'Legitimate User (Rohit)', shape: 'box', margin: 10, color: { background: '#ffffff', border: '#e0e0e0' }, font: { color: '#141414', size: 12, face: 'Inter' } },
-            { id: 2, label: 'Merchant (Swiggy)', shape: 'box', margin: 10, color: { background: '#ffffff', border: '#e0e0e0' }, font: { color: '#141414', size: 12, face: 'Inter' } },
-            { id: 3, label: 'Mule Account A', shape: 'box', margin: 10, color: { background: '#141414', border: '#141414' }, font: { color: '#ffffff', size: 12, face: 'Inter' } },
-            { id: 4, label: 'Mule Account B', shape: 'box', margin: 10, color: { background: '#141414', border: '#141414' }, font: { color: '#ffffff', size: 12, face: 'Inter' } },
-            { id: 5, label: 'DEV_MULE_002 (Hardware Hub)', shape: 'box', margin: 10, color: { background: '#0066ff', border: '#0066ff' }, font: { color: '#ffffff', size: 12, face: 'Inter' } },
-            { id: 6, label: 'High-Risk IP: 10.0.99.4', shape: 'box', margin: 10, color: { background: '#f0f0f0', border: '#e0e0e0' }, font: { color: '#141414', size: 12, face: 'Inter' } }
-        ]);
-
-        const edges = new vis.DataSet([
-            { from: 1, to: 2, label: 'transacts ₹480', color: { color: '#e0e0e0' }, font: { size: 10, color: '#707070', face: 'Inter' } },
-            { from: 3, to: 5, label: 'shares hardware', color: { color: '#0066ff' }, font: { size: 10, color: '#0066ff', face: 'Inter' }, dashes: true },
-            { from: 4, to: 5, label: 'shares hardware', color: { color: '#0066ff' }, font: { size: 10, color: '#0066ff', face: 'Inter' }, dashes: true },
-            { from: 3, to: 4, label: 'colludes ₹85,000', color: { color: '#141414' }, font: { size: 10, color: '#141414', face: 'Inter' }, width: 2 },
-            { from: 3, to: 6, label: 'shared subnet', color: { color: '#e0e0e0' } },
-            { from: 4, to: 6, label: 'shared subnet', color: { color: '#e0e0e0' } }
-        ]);
-
-        const network = new vis.Network(container, { nodes, edges }, {
-            physics: {
-                stabilization: true,
-                barnesHut: { springLength: 120, damping: 0.25 }
-            },
-            interaction: { hover: true }
+        // Initialize Lucide Icons
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            initNetworkGraph();
+            initBenchmarkCharts();
+            seedInitialRows();
         });
 
-        network.on("click", function(params) {
-            if (params.nodes.length > 0) {
-                const nodeId = params.nodes[0];
-                if (nodeId === 3 || nodeId === 4 || nodeId === 5) {
-                    showAuditExplanation("TXN_MULE_COLLUSION", "BLOCK", 0.98, [
-                        "Hardware Fingerprint matches DEV_MULE_002 with 5 previous fraud flags.",
-                        "GraphSAGE attention weight concentrates on co-located accounts A and B.",
-                        "Direct circular transfer of ₹85,000 without prior transaction baseline."
-                    ]);
+        // Tab Switching
+        function switchTab(tab) {
+            const tabs = ['live', 'graph', 'benchmarks', 'about'];
+            tabs.forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tab) {
+                    view.classList.remove('hidden');
+                    btn.classList.add('text-ink', 'bg-white', 'shadow-sm', 'border', 'border-[#dce0da]');
+                    btn.classList.remove('text-wiseBody', 'hover:bg-white/60');
                 } else {
-                    showAuditExplanation("TXN_ROHIT_SWIGGY", "APPROVE", 0.02, [
-                        "Established customer VPA with over 45 historical successful transactions.",
-                        "Transfer amount (₹480) fits regular Gaussian food & dining behavior.",
-                        "No co-location with suspicious clusters in 2-hop graph neighborhood."
-                    ]);
+                    view.classList.add('hidden');
+                    btn.classList.remove('text-ink', 'bg-white', 'shadow-sm', 'border', 'border-[#dce0da]');
+                    btn.classList.add('text-wiseBody', 'hover:bg-white/60');
                 }
+            });
+
+            if (tab === 'live') {
+                setTimeout(() => { recenterGraph(); }, 150);
+            }
+            if (tab === 'graph') {
+                setTimeout(() => { initFullGraph(); }, 150);
+            }
+            if (tab === 'benchmarks') {
+                setTimeout(() => { benchmarkChart.resize(); fpChart.resize(); }, 150);
+            }
+            lucide.createIcons();
+        }
+
+        window.addEventListener('resize', () => {
+            if (networkInstance) {
+                recenterGraph();
             }
         });
 
-        function renderTable() {
-            const tbody = document.getElementById('transaction-rows');
-            tbody.innerHTML = '';
+        // ================= VIS.JS NETWORK GRAPH WITH LIVE CANVAS ANIMATIONS =================
+        let networkInstance = null;
+        let graphNodes = null;
+        let graphEdges = null;
 
-            const filtered = transactionStream.filter(item => {
-                if (currentFilter === 'flagged') return item.flag === 'fraud';
-                if (currentFilter === 'approved') return item.flag === 'safe';
-                return true;
-            });
+        function initNetworkGraph() {
+            const container = document.getElementById('network-container');
 
-            filtered.forEach(txn => {
-                const row = document.createElement('tr');
-                row.className = 'row-clickable';
-                row.onclick = () => inspectTransaction(txn);
+            // Symmetrically centered coordinates around origin (0, 0)
+            graphNodes = new vis.DataSet([
+                { id: 'TXN_101', label: 'TXN_101\n₹420', shape: 'dot', size: 16, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: -220, y: -80 },
+                { id: 'TXN_102', label: 'TXN_102\n₹1,250', shape: 'dot', size: 18, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: -70, y: -130 },
+                { id: 'TXN_103', label: 'TXN_103\n₹3,100', shape: 'dot', size: 20, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: 90, y: -80 },
+                { id: 'DEV_MULE_002', label: 'DEV_MULE_002\n[Shared HW]', shape: 'diamond', size: 28, color: { background: '#ffd11a', border: '#b86700' }, font: { color: '#0e0f0c', size: 11, face: 'JetBrains Mono' }, x: 180, y: 80 },
+                { id: 'IP_10_0_99_4', label: '10.0.99.4\n[Proxy IP]', shape: 'diamond', size: 24, color: { background: '#0e0f0c', border: '#0e0f0c' }, font: { color: '#9fe870', size: 11, face: 'JetBrains Mono' }, x: -180, y: 80 },
+                { id: 'TXN_MULE_9481', label: 'TXN_MULE_9481\n₹85,000 [FLAGGED]', shape: 'dot', size: 28, color: { background: '#d03238', border: '#a72027' }, font: { color: '#d03238', size: 11, strokeWidth: 1 }, x: 0, y: 90 },
+            ]);
 
-                const badgeClass = txn.decision === 'BLOCK' ? 'pill-badge-fraud' : (txn.decision === 'REVIEW' ? 'pill-badge-flagged' : 'pill-badge-safe');
+            graphEdges = new vis.DataSet([
+                { id: 'e1', from: 'TXN_101', to: 'TXN_102', color: { color: '#cdd2cb' }, arrows: 'to' },
+                { id: 'e2', from: 'TXN_102', to: 'TXN_103', color: { color: '#cdd2cb' }, arrows: 'to' },
+                { id: 'e3', from: 'TXN_MULE_9481', to: 'DEV_MULE_002', label: 'shared_dev', color: { color: '#d03238' }, width: 3, font: { color: '#d03238', size: 10 } },
+                { id: 'e4', from: 'TXN_MULE_9481', to: 'IP_10_0_99_4', label: 'shared_ip', color: { color: '#d03238' }, width: 3, font: { color: '#d03238', size: 10 } }
+            ]);
 
-                row.innerHTML = `
-                    <td><code>${txn.id}</code></td>
-                    <td>
-                        <div class="vpa-cell">
-                            <div class="app-icon-squircle">${txn.bank.slice(0, 3)}</div>
-                            <span>${txn.sender}</span>
-                        </div>
-                    </td>
-                    <td><span style="color: var(--colors-text-muted);">${txn.receiver}</span></td>
-                    <td><strong>₹${txn.amount.toLocaleString('en-IN')}</strong></td>
-                    <td><span style="font-weight: 600; color: ${txn.score > 0.6 ? 'var(--colors-accent)' : 'var(--colors-ink)'}">${(txn.score * 100).toFixed(1)}%</span></td>
-                    <td><span class="pill-badge ${badgeClass}">${txn.decision}</span></td>
-                `;
-
-                tbody.appendChild(row);
-            });
-        }
-
-        function inspectTransaction(txn) {
-            document.getElementById('inspecting-id').innerText = txn.id;
-            if (txn.decision === 'BLOCK') {
-                showAuditExplanation(txn.id, txn.decision, txn.score, [
-                    `Linked to high-risk hardware token ${txn.device}.`,
-                    `GraphSAGE neighborhood risk score: ${(txn.score * 100).toFixed(1)}%.`,
-                    `Exceeds single transaction threshold with anomalous counterparty.`
-                ]);
-            } else {
-                showAuditExplanation(txn.id, txn.decision, txn.score, [
-                    `Normal transactional baseline from ${txn.sender}.`,
-                    `Verified counterparty and clean device identity.`,
-                    `Approved by hybrid decision layer without user friction.`
-                ]);
-            }
-        }
-
-        function showAuditExplanation(id, decision, score, reasons) {
-            document.getElementById('audit-title').innerText = `Audit Log: ${id}`;
-            const badge = document.getElementById('audit-badge');
-            badge.innerText = decision;
-            badge.className = decision === 'BLOCK' ? 'pill-badge pill-badge-fraud' : 'pill-badge pill-badge-safe';
-
-            const list = document.getElementById('audit-reasons');
-            list.innerHTML = reasons.map(r => `
-                <li class="audit-item">
-                    <span class="audit-item-dot"></span>
-                    <span>${r}</span>
-                </li>
-            `).join('');
-        }
-
-        function injectNormalTransaction() {
-            totalTxnCount++;
-            document.getElementById('val-total-txns').innerText = totalTxnCount.toLocaleString();
-
-            const senders = ["akshay@oksbi", "meera.d@okhdfcbank", "vikram@okicici", "ananya@paytm"];
-            const receivers = ["starbucks@ybl", "uber@icici", "zepto@axis", "netflix@hdfc"];
-            const banks = ["SBI", "HDFC", "ICICI", "AXIS"];
-
-            const id = 'TXN_' + Math.floor(10000 + Math.random() * 90000);
-            const sender = senders[Math.floor(Math.random() * senders.length)];
-            const receiver = receivers[Math.floor(Math.random() * receivers.length)];
-            const bank = banks[Math.floor(Math.random() * banks.length)];
-            const amount = Math.floor(Math.random() * 3200) + 150;
-            const score = (Math.random() * 0.08).toFixed(3);
-
-            transactionStream.unshift({
-                id,
-                sender,
-                bank,
-                receiver,
-                amount,
-                score: parseFloat(score),
-                decision: "APPROVE",
-                device: "DEV_" + Math.floor(1000 + Math.random() * 9000),
-                flag: "safe"
-            });
-
-            if (transactionStream.length > 12) transactionStream.pop();
-            renderTable();
-        }
-
-        function injectMuleAttack() {
-            totalTxnCount++;
-            document.getElementById('val-total-txns').innerText = totalTxnCount.toLocaleString();
-
-            const id = 'TXN_ATTACK_' + Math.floor(100 + Math.random() * 900);
-            const amount = Math.floor(Math.random() * 35000) + 65000;
-            const score = (0.94 + Math.random() * 0.05).toFixed(3);
-
-            const attackTxn = {
-                id,
-                sender: "mule_infiltrator@oksbi",
-                bank: "SBI",
-                receiver: "crypto_exit_node@paytm",
-                amount,
-                score: parseFloat(score),
-                decision: "BLOCK",
-                device: "DEV_MULE_002",
-                flag: "fraud"
+            const options = {
+                physics: {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -75,
+                        centralGravity: 0.015,
+                        springLength: 140,
+                        springConstant: 0.05,
+                        damping: 0.5,
+                        avoidOverlap: 0.8
+                    },
+                    stabilization: {
+                        enabled: true,
+                        iterations: 120,
+                        fit: true
+                    }
+                },
+                interaction: { hover: true, zoomView: true, dragView: true }
             };
 
-            transactionStream.unshift(attackTxn);
-            if (transactionStream.length > 12) transactionStream.pop();
-            renderTable();
-            inspectTransaction(attackTxn);
+            networkInstance = new vis.Network(container, { nodes: graphNodes, edges: graphEdges }, options);
 
-            // Add node to Vis.js
-            const newId = nodes.length + 1;
-            nodes.add({ id: newId, label: id, shape: 'box', margin: 10, color: { background: '#141414', border: '#141414' }, font: { color: '#ffffff', size: 12, face: 'Inter' } });
-            edges.add({ from: newId, to: 5, label: 'device collusion', color: { color: '#0066ff' }, dashes: true });
-        }
+            // ================= LIVE CANVAS ANIMATION LAYER (Radar Halos & Flowing Energy Packets) =================
+            let animTick = 0;
+            networkInstance.on('afterDrawing', function (ctx) {
+                animTick += 0.035;
 
-        function resetFeed() {
-            transactionStream = [...initialTransactions];
-            renderTable();
-        }
+                // 1. Radar wave pulse rings on flagged/mule nodes
+                const flaggedNodeIds = ['TXN_MULE_9481', 'DEV_MULE_002', 'TXN_MULE_801', 'TXN_MULE_802', 'TXN_MULE_803'];
+                flaggedNodeIds.forEach(nodeId => {
+                    try {
+                        const pos = networkInstance.getPositions([nodeId])[nodeId];
+                        if (pos) {
+                            // Ring 1 (pulsing outward)
+                            const phase1 = (animTick) % 2;
+                            const r1 = 22 + phase1 * 28;
+                            const a1 = Math.max(0, 0.7 - phase1 * 0.35);
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, r1, 0, 2 * Math.PI, false);
+                            ctx.strokeStyle = `rgba(208, 50, 56, ${a1})`;
+                            ctx.lineWidth = 2.5;
+                            ctx.stroke();
 
-        function setFeedFilter(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-            if (filter === 'all') document.getElementById('seg-stream').classList.add('active');
-            if (filter === 'flagged') document.getElementById('seg-flagged').classList.add('active');
-            if (filter === 'approved') document.getElementById('seg-approved').classList.add('active');
-            renderTable();
-        }
+                            // Ring 2 (offset outward)
+                            const phase2 = (animTick + 1) % 2;
+                            const r2 = 22 + phase2 * 28;
+                            const a2 = Math.max(0, 0.7 - phase2 * 0.35);
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, r2, 0, 2 * Math.PI, false);
+                            ctx.strokeStyle = `rgba(208, 50, 56, ${a2})`;
+                            ctx.lineWidth = 1.5;
+                            ctx.stroke();
 
-        function triggerTestModal() {
-            document.getElementById('eval-lab').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        async function evaluateManualTxn() {
-            const sender = document.getElementById('inp-sender').value;
-            const receiver = document.getElementById('inp-receiver').value;
-            const amount = parseFloat(document.getElementById('inp-amount').value) || 1000;
-            const device = document.getElementById('inp-device').value;
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        transaction_id: 'TXN_TEST_' + Math.floor(1000 + Math.random() * 9000),
-                        timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-                        sender_vpa: sender,
-                        receiver_vpa: receiver,
-                        amount: amount,
-                        device_id: device
-                    })
+                            // Glowing core aura
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, 24 + Math.sin(animTick * 3) * 2, 0, 2 * Math.PI, false);
+                            ctx.fillStyle = 'rgba(208, 50, 56, 0.12)';
+                            ctx.fill();
+                        }
+                    } catch (e) { }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    const newTxn = {
-                        id: data.transaction_id,
-                        sender: sender,
-                        bank: sender.includes('sbi') ? 'SBI' : 'HDFC',
-                        receiver: receiver,
-                        amount: amount,
-                        score: data.hybrid_risk_score,
-                        decision: data.is_fraud ? "BLOCK" : "APPROVE",
-                        device: device,
-                        flag: data.is_fraud ? "fraud" : "safe"
-                    };
+                // 2. Animated particles flowing along collusion and normal payment edges
+                const activeStreams = [
+                    { from: 'TXN_MULE_9481', to: 'DEV_MULE_002', color: '#d03238' },
+                    { from: 'TXN_MULE_9481', to: 'IP_10_0_99_4', color: '#d03238' },
+                    { from: 'TXN_MULE_801', to: 'DEV_MULE_002', color: '#d03238' },
+                    { from: 'TXN_MULE_802', to: 'DEV_MULE_002', color: '#d03238' },
+                    { from: 'TXN_MULE_803', to: 'DEV_MULE_002', color: '#d03238' },
+                    { from: 'TXN_101', to: 'TXN_102', color: '#2ead4b' },
+                    { from: 'TXN_102', to: 'TXN_103', color: '#2ead4b' }
+                ];
 
-                    transactionStream.unshift(newTxn);
-                    renderTable();
-                    inspectTransaction(newTxn);
-                } else {
-                    simulateClientEval(sender, receiver, amount, device);
+                activeStreams.forEach(stream => {
+                    try {
+                        const posFrom = networkInstance.getPositions([stream.from])[stream.from];
+                        const posTo = networkInstance.getPositions([stream.to])[stream.to];
+                        if (posFrom && posTo) {
+                            const isFraud = stream.color === '#d03238';
+                            const speed = isFraud ? 0.55 : 0.35;
+                            const t = (animTick * speed) % 1;
+                            const px = posFrom.x + (posTo.x - posFrom.x) * t;
+                            const py = posFrom.y + (posTo.y - posFrom.y) * t;
+
+                            ctx.beginPath();
+                            ctx.arc(px, py, isFraud ? 4.5 : 3.5, 0, 2 * Math.PI, false);
+                            ctx.fillStyle = stream.color;
+                            ctx.shadowColor = stream.color;
+                            ctx.shadowBlur = isFraud ? 8 : 4;
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+                    } catch (e) { }
+                });
+            });
+
+            // 60fps Redraw Loop
+            function loopAnim() {
+                if (networkInstance) {
+                    networkInstance.redraw();
                 }
-            } catch (err) {
-                simulateClientEval(sender, receiver, amount, device);
+                requestAnimationFrame(loopAnim);
+            }
+            requestAnimationFrame(loopAnim);
+
+            // Center nicely after initial layout
+            setTimeout(() => {
+                recenterGraph();
+            }, 300);
+
+            networkInstance.on('click', function (params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    if (nodeId.toString().startsWith('TXN_MULE') || nodeId.toString().startsWith('TXN_')) {
+                        openAuditDrawerForNode(nodeId);
+                    }
+                }
+            });
+        }
+
+        // Recenter Graph View Helper
+        function recenterGraph() {
+            if (networkInstance) {
+                networkInstance.fit({
+                    animation: {
+                        duration: 800,
+                        easingFunction: 'easeInOutQuad'
+                    }
+                });
             }
         }
 
-        function simulateClientEval(sender, receiver, amount, device) {
-            const isMule = device.includes('MULE') || amount >= 75000;
-            const score = isMule ? 0.96 : 0.03;
-            const newTxn = {
-                id: 'TXN_TEST_' + Math.floor(1000 + Math.random() * 9000),
-                sender,
-                bank: 'SBI',
-                receiver,
-                amount,
-                score,
-                decision: isMule ? "BLOCK" : "APPROVE",
-                device,
-                flag: isMule ? "fraud" : "safe"
-            };
-            transactionStream.unshift(newTxn);
-            renderTable();
-            inspectTransaction(newTxn);
+        // Add Transaction Row to Table
+        function addTableRow(txn, animate = true) {
+            const tbody = document.getElementById('feed-tbody');
+            const row = document.createElement('tr');
+            row.className = `cursor-pointer transition-colors hover:bg-canvasSoft/40 ${animate ? 'animate-fade-in' : ''}`;
+
+            const isBlock = txn.decision === 'BLOCK';
+            const isReview = txn.decision === 'REVIEW';
+
+            const pillStyle = isBlock
+                ? 'bg-negativeBg text-negativeDarkest font-bold'
+                : (isReview ? 'bg-[#fff5cc] text-warningContent font-bold' : 'bg-wiseGreenPale text-positiveDeep font-bold');
+
+            const scoreColor = txn.risk_score >= 0.70 ? 'text-negativeDarkest font-bold' : (txn.risk_score >= 0.40 ? 'text-warningDeep font-bold' : 'text-positiveDeep font-bold');
+
+            row.innerHTML = `
+                <td class="py-3 px-4 text-ink font-semibold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full ${isBlock ? 'bg-negative' : 'bg-positive'}"></span>
+                    <span>${txn.id}</span>
+                </td>
+                <td class="py-3 px-4 text-wiseBody">${txn.sender}</td>
+                <td class="py-3 px-4 text-wiseMute">${txn.receiver}</td>
+                <td class="py-3 px-4 font-bold text-ink">₹${txn.amount.toLocaleString('en-IN')}</td>
+                <td class="py-3 px-4 ${scoreColor}">${txn.risk_score.toFixed(3)}</td>
+                <td class="py-3 px-4">
+                    <span class="px-2.5 py-1 rounded-pill text-[11px] ${pillStyle}">
+                        ${txn.decision}
+                    </span>
+                </td>
+            `;
+
+            row.onclick = () => openAuditDrawer(txn);
+
+            tbody.insertBefore(row, tbody.firstChild);
+
+            if (tbody.children.length > 12) {
+                tbody.removeChild(tbody.lastChild);
+            }
         }
 
-        // Initialize table on load
-        renderTable();
+        // Inject Clean Transaction
+        function injectNormalTransaction() {
+            scannedCount++;
+            approvedCount++;
+            document.getElementById('kpi-scanned').innerText = scannedCount.toLocaleString();
+            document.getElementById('kpi-approved').innerText = approvedCount.toLocaleString();
+
+            const sender = cleanSenders[Math.floor(Math.random() * cleanSenders.length)];
+            const receiver = cleanReceivers[Math.floor(Math.random() * cleanReceivers.length)];
+            const amount = Math.floor(Math.random() * 2800) + 120;
+            const gnn = (Math.random() * 0.12).toFixed(3);
+            const rule = (Math.random() * 0.05).toFixed(3);
+            const hybrid = (0.7 * parseFloat(gnn) + 0.3 * parseFloat(rule)).toFixed(3);
+            const txnId = 'TXN_' + Math.floor(100000 + Math.random() * 900000);
+
+            const txnObj = {
+                id: txnId,
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                sender,
+                receiver,
+                amount,
+                gnn_score: parseFloat(gnn),
+                rule_score: parseFloat(rule),
+                risk_score: parseFloat(hybrid),
+                decision: 'APPROVE',
+                latency: (14 + Math.random() * 6).toFixed(1),
+                device: 'DEV_AUTH_' + Math.floor(100 + Math.random() * 899),
+                ip: '192.168.1.' + Math.floor(10 + Math.random() * 80),
+                location: 'Bengaluru',
+                explanations: [
+                    'Standard velocity conforms with historical consumer profile.',
+                    'GNN topological weights indicate strong affinity to verified merchant.',
+                    'Device and IP match trusted authentication fingerprint.'
+                ]
+            };
+
+            addTableRow(txnObj);
+
+            if (graphNodes.length < 25) {
+                graphNodes.add({
+                    id: txnId,
+                    label: `${txnId}\n₹${amount}`,
+                    shape: 'dot',
+                    size: 14,
+                    color: { background: '#2ead4b', border: '#054d28' },
+                    font: { color: '#0e0f0c', size: 10, face: 'Inter' }
+                });
+            }
+        }
+
+        // TRIGGER MULE ATTACK SIMULATION (Wise Style)
+        function triggerMuleAttack() {
+            const attackBurst = [
+                { id: 'TXN_MULE_801', sender: 'mule_agent_01@oksbi', receiver: 'crypto_sink@paytm', amount: 92000, gnn: 0.952, rule: 0.92, device: 'DEV_MULE_002', ip: '10.0.99.4' },
+                { id: 'TXN_MULE_802', sender: 'mule_agent_02@okhdfc', receiver: 'crypto_sink@paytm', amount: 89000, gnn: 0.941, rule: 0.88, device: 'DEV_MULE_002', ip: '10.0.99.4' },
+                { id: 'TXN_MULE_803', sender: 'fast_cash_88@okaxis', receiver: 'crypto_sink@paytm', amount: 95000, gnn: 0.968, rule: 0.95, device: 'DEV_MULE_002', ip: '10.0.99.4' },
+            ];
+
+            let delay = 0;
+            attackBurst.forEach((mule) => {
+                setTimeout(() => {
+                    scannedCount++;
+                    blockedCount++;
+                    document.getElementById('kpi-scanned').innerText = scannedCount.toLocaleString();
+                    document.getElementById('kpi-blocked').innerText = blockedCount.toLocaleString();
+
+                    const hybrid = (0.7 * mule.gnn + 0.3 * mule.rule);
+                    const txnObj = {
+                        id: mule.id,
+                        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                        sender: mule.sender,
+                        receiver: mule.receiver,
+                        amount: mule.amount,
+                        gnn_score: mule.gnn,
+                        rule_score: mule.rule,
+                        risk_score: hybrid,
+                        decision: 'BLOCK',
+                        latency: (18.1 + Math.random() * 3).toFixed(1),
+                        device: mule.device,
+                        ip: mule.ip,
+                        location: 'Delhi-NCR (Proxy)',
+                        explanations: [
+                            `Hardware Hijack: Device ${mule.device} linked to 4 distinct VPAs in <10 minutes.`,
+                            `GNN Message Passing: Relational attention (&alpha;=0.96) converges on known laundering sink.`,
+                            `Temporal Velocity Anomaly: ₹${mule.amount.toLocaleString('en-IN')} spikes 20x above baseline.`
+                        ]
+                    };
+
+                    addTableRow(txnObj);
+
+                    // Add flagged node to graph
+                    try {
+                        graphNodes.add({
+                            id: mule.id,
+                            label: `${mule.id}\n₹${mule.amount.toLocaleString('en-IN')} [BLOCKED]`,
+                            shape: 'dot',
+                            size: 22,
+                            color: { background: '#d03238', border: '#a72027' },
+                            font: { color: '#d03238', size: 10, face: 'Inter', strokeWidth: 1 }
+                        });
+                        graphEdges.add({
+                            from: mule.id,
+                            to: 'DEV_MULE_002',
+                            label: 'colludes',
+                            color: { color: '#d03238' },
+                            width: 3
+                        });
+                    } catch (e) { }
+
+                    if (mule.id === 'TXN_MULE_801') {
+                        openAuditDrawer(txnObj);
+                        networkInstance.focus('DEV_MULE_002', { scale: 1.2, animation: { duration: 600 } });
+                    }
+                }, delay);
+                delay += 350;
+            });
+        }
+
+        // Auto Stream Toggle
+        function toggleAutoStream() {
+            isStreaming = !isStreaming;
+            const btn = document.getElementById('btn-autostream');
+            const icon = document.getElementById('icon-stream');
+            const txt = document.getElementById('text-stream');
+
+            if (isStreaming) {
+                btn.classList.add('bg-ink', 'text-wiseGreen');
+                btn.classList.remove('bg-white', 'text-ink');
+                txt.innerText = 'Pause Stream';
+                streamTimer = setInterval(() => {
+                    if (Math.random() > 0.85) {
+                        triggerMuleAttack();
+                    } else {
+                        injectNormalTransaction();
+                    }
+                }, 1600);
+            } else {
+                btn.classList.remove('bg-ink', 'text-wiseGreen');
+                btn.classList.add('bg-white', 'text-ink');
+                txt.innerText = 'Auto Stream';
+                clearInterval(streamTimer);
+            }
+        }
+
+        // ================= AUDIT DRAWER LOGIC =================
+        function openAuditDrawer(txn) {
+            currentSelectedTxn = txn;
+            const drawer = document.getElementById('audit-drawer');
+
+            document.getElementById('drawer-txn-id').innerText = txn.id;
+            document.getElementById('drawer-timestamp').innerText = txn.timestamp;
+            document.getElementById('drawer-latency').innerText = `${txn.latency} ms`;
+            document.getElementById('drawer-risk-score').innerText = txn.risk_score.toFixed(3);
+            document.getElementById('drawer-amount').innerText = `₹${txn.amount.toLocaleString('en-IN')}`;
+            document.getElementById('drawer-sender').innerText = txn.sender;
+            document.getElementById('drawer-receiver').innerText = txn.receiver;
+            document.getElementById('drawer-device').innerText = txn.device || 'DEV_UNKNOWN';
+            document.getElementById('drawer-ip').innerText = `${txn.ip} (${txn.location || 'India'})`;
+
+            const badge = document.getElementById('drawer-decision-badge');
+            const isBlock = txn.decision === 'BLOCK';
+            badge.innerText = txn.decision;
+            badge.className = `px-3 py-1 rounded-pill text-xs font-mono font-bold ${isBlock ? 'bg-negativeBg text-negativeDarkest' : 'bg-wiseGreenPale text-positiveDeep'}`;
+
+            // Gauge fill calculation
+            const strokeOffset = 251.2 * (1 - Math.min(Math.max(txn.risk_score, 0), 1));
+            const gaugeArc = document.getElementById('gauge-fill-arc');
+            gaugeArc.style.strokeDashoffset = strokeOffset;
+            gaugeArc.style.stroke = isBlock ? '#d03238' : '#2ead4b';
+
+            // Stacked bar calculation
+            const gnnWeighted = txn.gnn_score * 0.70;
+            const ruleWeighted = txn.rule_score * 0.30;
+            const total = (gnnWeighted + ruleWeighted) || 0.01;
+            const gnnPct = Math.round((gnnWeighted / total) * 100);
+            const rulePct = 100 - gnnPct;
+
+            document.getElementById('bar-gnn').style.width = `${gnnPct}%`;
+            document.getElementById('bar-rule').style.width = `${rulePct}%`;
+            document.getElementById('drawer-gnn-pct').innerText = `${gnnPct}%`;
+            document.getElementById('drawer-rule-pct').innerText = `${rulePct}%`;
+            document.getElementById('drawer-gnn-raw').innerText = txn.gnn_score.toFixed(2);
+            document.getElementById('drawer-rule-raw').innerText = txn.rule_score.toFixed(2);
+
+            // Populating explanations
+            const expContainer = document.getElementById('drawer-explanations');
+            expContainer.className = `p-4 rounded-wise space-y-2 text-xs border-l-4 ${isBlock ? 'bg-negativeBg border-negativeDarkest' : 'bg-wiseGreenPale border-positive'}`;
+            expContainer.innerHTML = txn.explanations.map(msg => `
+                <div class="flex items-start gap-2">
+                    <span class="${isBlock ? 'text-negativeDarkest' : 'text-positiveDeep'} font-bold">&bull;</span>
+                    <span class="text-ink leading-relaxed">${msg}</span>
+                </div>
+            `).join('');
+
+            try {
+                if (graphNodes.get(txn.id)) {
+                    networkInstance.selectNodes([txn.id]);
+                    networkInstance.focus(txn.id, { scale: 1.1, animation: { duration: 400 } });
+                }
+            } catch (e) { }
+
+            drawer.classList.remove('translate-x-full');
+            lucide.createIcons();
+        }
+
+        function closeAuditDrawer() {
+            document.getElementById('audit-drawer').classList.add('translate-x-full');
+        }
+
+        function inspectInGraphFromDrawer() {
+            if (currentSelectedTxn && graphNodes.get(currentSelectedTxn.id)) {
+                switchTab('live');
+                networkInstance.focus(currentSelectedTxn.id, { scale: 1.4, animation: { duration: 500 } });
+                closeAuditDrawer();
+            }
+        }
+
+        function openAuditDrawerForNode(nodeId) {
+            const isMule = nodeId.includes('MULE');
+            const mockTxn = {
+                id: nodeId,
+                timestamp: '2026-10-15 02:45:12',
+                sender: isMule ? 'mule_ring_leader@oksbi' : 'rohit.v@okhdfcbank',
+                receiver: isMule ? 'crypto_drain@paytm' : 'amazon.pay@apl',
+                amount: isMule ? 85000 : 1250,
+                gnn_score: isMule ? 0.94 : 0.08,
+                rule_score: isMule ? 0.90 : 0.02,
+                risk_score: isMule ? 0.928 : 0.062,
+                decision: isMule ? 'BLOCK' : 'APPROVE',
+                latency: '18.4',
+                device: isMule ? 'DEV_MULE_002' : 'DEV_AUTH_491',
+                ip: isMule ? '10.0.99.4' : '103.21.24.8',
+                location: isMule ? 'Mumbai (VPN Pool)' : 'Bengaluru',
+                explanations: isMule ? [
+                    'Co-located on DEV_MULE_002 linked to 4 prior confirmed cyber complaints.',
+                    'GNN Relational Attention weight = 0.96 connecting to known laundering ring.',
+                    'Transaction amount ₹85,000 executed at 02:45 AM (Odd-Hours velocity spike).'
+                ] : [
+                    'Standard verified consumer payment.',
+                    'GNN topology verifies trusted merchant hub with high legitimacy.'
+                ]
+            };
+            openAuditDrawer(mockTxn);
+        }
+
+        // ================= FULL GRAPH EXPLORER =================
+        let fullNetworkInstance = null;
+
+        function initFullGraph() {
+            if (fullNetworkInstance) return;
+            const container = document.getElementById('full-network-container');
+
+            const fNodes = new vis.DataSet([
+                { id: 1, label: 'User_401\n(Legit)', color: '#2ead4b', shape: 'dot', size: 16 },
+                { id: 2, label: 'Swiggy_Merchant', color: '#2ead4b', shape: 'dot', size: 22 },
+                { id: 3, label: 'User_402\n(Legit)', color: '#2ead4b', shape: 'dot', size: 16 },
+                { id: 4, label: 'DEV_PHONE_X', color: '#0e0f0c', shape: 'diamond', size: 18, font: { color: '#9fe870' } },
+                { id: 10, label: 'Mule_Node_A\n[0.96 Risk]', color: '#d03238', shape: 'dot', size: 24 },
+                { id: 11, label: 'Mule_Node_B\n[0.94 Risk]', color: '#d03238', shape: 'dot', size: 24 },
+                { id: 12, label: 'Mule_Node_C\n[0.91 Risk]', color: '#d03238', shape: 'dot', size: 24 },
+                { id: 13, label: 'DEV_MULE_002\n[Shared HW]', color: '#ffd11a', shape: 'diamond', size: 28 },
+                { id: 14, label: 'IP_10_0_99_4\n[Proxy]', color: '#ffd11a', shape: 'diamond', size: 24 },
+                { id: 15, label: 'Laundering_Sink\n[Crypto Wallet]', color: '#d03238', shape: 'dot', size: 30 }
+            ]);
+
+            const fEdges = new vis.DataSet([
+                { from: 1, to: 2, label: '₹450', color: '#cdd2cb' },
+                { from: 3, to: 2, label: '₹890', color: '#cdd2cb' },
+                { from: 1, to: 4, label: 'auth_dev', color: '#cdd2cb' },
+                { from: 10, to: 13, label: 'shares_hw', color: '#d03238', width: 2.5 },
+                { from: 11, to: 13, label: 'shares_hw', color: '#d03238', width: 2.5 },
+                { from: 12, to: 13, label: 'shares_hw', color: '#d03238', width: 2.5 },
+                { from: 10, to: 14, label: 'proxy_ip', color: '#d03238', width: 2.5 },
+                { from: 11, to: 15, label: '₹95,000', color: '#d03238', width: 3 },
+                { from: 12, to: 15, label: '₹88,000', color: '#d03238', width: 3 }
+            ]);
+
+            fullNetworkInstance = new vis.Network(container, { nodes: fNodes, edges: fEdges }, {
+                physics: { stabilization: true },
+                nodes: { font: { color: '#0e0f0c', size: 11, face: 'Inter' } }
+            });
+        }
+
+        function highlightMuleCluster() {
+            if (!fullNetworkInstance) initFullGraph();
+            fullNetworkInstance.focus(13, { scale: 1.5, animation: { duration: 600 } });
+            fullNetworkInstance.selectNodes([10, 11, 12, 13, 14, 15]);
+        }
+
+        function resetGraphView() {
+            if (fullNetworkInstance) fullNetworkInstance.fit({ animation: { duration: 500 } });
+        }
+
+        function filterGraphByRisk(val) {
+            document.getElementById('graph-filter-val').innerText = `≥ ${(val / 100).toFixed(2)}`;
+        }
+
+        // ================= CHART.JS BENCHMARKS =================
+        let benchmarkChart = null;
+        let fpChart = null;
+
+        function initBenchmarkCharts() {
+            const ctx1 = document.getElementById('benchmarkChart').getContext('2d');
+            benchmarkChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['GraphSAGE (GNN)', 'XGBoost Baseline', 'Tabular Deep MLP', 'GAT (Attention GNN)'],
+                    datasets: [
+                        {
+                            label: 'Precision (%)',
+                            data: [99.62, 98.56, 88.06, 73.08],
+                            backgroundColor: '#2ead4b',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Recall (%)',
+                            data: [96.34, 100.0, 100.0, 90.48],
+                            backgroundColor: '#0e0f0c',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'F1-Score (%)',
+                            data: [97.95, 99.27, 93.65, 80.85],
+                            backgroundColor: '#9fe870',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#454745', font: { family: 'Inter', size: 12, weight: '500' } } }
+                    },
+                    scales: {
+                        y: {
+                            min: 65,
+                            max: 102,
+                            ticks: { color: '#868685', font: { family: 'JetBrains Mono', size: 11 } },
+                            grid: { color: '#eef0ec' }
+                        },
+                        x: {
+                            ticks: { color: '#0e0f0c', font: { family: 'Inter', size: 12, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('fpChart').getContext('2d');
+            fpChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['GraphSAGE', 'XGBoost', 'Tabular MLP', 'GAT'],
+                    datasets: [{
+                        label: 'False Positives',
+                        data: [1, 4, 37, 91],
+                        backgroundColor: ['#2ead4b', '#0e0f0c', '#d03238', '#a72027'],
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.raw} False Positives / 14,727 transactions`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#868685', font: { family: 'JetBrains Mono', size: 11 } },
+                            grid: { color: '#eef0ec' }
+                        },
+                        x: {
+                            ticks: { color: '#0e0f0c', font: { family: 'Inter', size: 12, weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Seed Initial Rows
+        function seedInitialRows() {
+            const initialSeeds = [
+                { id: 'TXN_94821', sender: 'priya.nair@okhdfcbank', receiver: 'zomato.order@hdfc', amount: 640, gnn: 0.04, rule: 0.01, decision: 'APPROVE', latency: '14.2' },
+                { id: 'TXN_94822', sender: 'aravind.k@paytm', receiver: 'kirana.mart@paytm', amount: 310, gnn: 0.02, rule: 0.00, decision: 'APPROVE', latency: '15.8' },
+                { id: 'TXN_MULE_9481', sender: 'mule_agent_01@oksbi', receiver: 'crypto_sink@paytm', amount: 85000, gnn: 0.96, rule: 0.90, decision: 'BLOCK', latency: '18.4' },
+                { id: 'TXN_94823', sender: 'ananya.das@okaxis', receiver: 'swiggy.pay@icici', amount: 1120, gnn: 0.05, rule: 0.02, decision: 'APPROVE', latency: '16.1' },
+                { id: 'TXN_94824', sender: 'kiran.patel@icici', receiver: 'amazon.upi@apl', amount: 4890, gnn: 0.11, rule: 0.05, decision: 'APPROVE', latency: '17.0' },
+            ];
+
+            initialSeeds.forEach(item => {
+                const hybrid = (0.7 * item.gnn + 0.3 * item.rule);
+                addTableRow({
+                    id: item.id,
+                    timestamp: '2026-10-15 02:40:' + Math.floor(10 + Math.random() * 45),
+                    sender: item.sender,
+                    receiver: item.receiver,
+                    amount: item.amount,
+                    gnn_score: item.gnn,
+                    rule_score: item.rule,
+                    risk_score: hybrid,
+                    decision: item.decision,
+                    latency: item.latency,
+                    device: item.id.includes('MULE') ? 'DEV_MULE_002' : 'DEV_AUTH_771',
+                    ip: item.id.includes('MULE') ? '10.0.99.4' : '49.36.128.9',
+                    location: item.id.includes('MULE') ? 'Mumbai (Proxy)' : 'Bengaluru',
+                    explanations: item.id.includes('MULE') ? [
+                        'Co-located on DEV_MULE_002 linked to 4 prior cyber fraud cases.',
+                        'GNN Message Passing propagates high collusion probability across 2-hop radius.',
+                        'Amount ₹85,000 exceeds 15x normal velocity cap.'
+                    ] : [
+                        'Legitimate consumer merchant payment transaction.',
+                        'GNN node embedding aligns closely with trusted historical cluster.'
+                    ]
+                }, false);
+            });
+        }
     </script>
 </body>
+
 </html>

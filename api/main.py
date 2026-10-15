@@ -96,6 +96,7 @@ def get_benchmark_stats():
                 "f1_score": 0.9927,
                 "auprc": 1.0000,
                 "roc_auc": 1.0000,
+                "false_positives": 4,
             },
             "MLP_Baseline": {
                 "precision": 0.8806,
@@ -103,6 +104,7 @@ def get_benchmark_stats():
                 "f1_score": 0.9365,
                 "auprc": 0.9994,
                 "roc_auc": 1.0000,
+                "false_positives": 37,
             },
             "GraphSAGE_GNN": {
                 "precision": 0.9962,
@@ -119,6 +121,7 @@ def get_benchmark_stats():
                 "f1_score": 0.8085,
                 "auprc": 0.8879,
                 "roc_auc": 0.9968,
+                "false_positives": 91,
             },
         },
         "key_takeaway": "GraphSAGE achieves an exceptional 99.62% precision with only 1 false positive across 14,727 transactions, effectively cutting false alerts while maintaining high recall on complex mule and device-sharing rings.",
