@@ -1,18 +1,33 @@
 # GNN-Based Real-Time UPI Fraud Detection
 
 <p align="center">
+  <a href="https://gnn-based-upi-fraud-detection.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Edge-9fe870?style=for-the-badge&logo=vercel&logoColor=black" alt="Live Demo on Vercel" /></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue.svg" alt="Python 3.10+" />
   <img src="https://img.shields.io/badge/PyTorch-2.1.0-EE4C2C.svg" alt="PyTorch" />
   <img src="https://img.shields.io/badge/FastAPI-0.104%2B-009688.svg" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Design-Wise%20System%20(%239fe870)-9fe870.svg" alt="Wise Design" />
-  <img src="https://img.shields.io/badge/Deploy-Vercel-black.svg" alt="Deployment" />
+  <img src="https://img.shields.io/badge/Design-Wise%20Design%20System-9fe870.svg" alt="Wise Design" />
+  <img src="https://img.shields.io/badge/Latency-<10ms%20SLA-brightgreen.svg" alt="Sub-10ms Latency" />
+  <img src="https://img.shields.io/badge/Tests-10%2F10%20Passing-success.svg" alt="Tests 10/10" />
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License" />
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" />
 </p>
 
-An inductive **Graph Neural Network (GraphSAGE)** combined with an expert **Heuristic Rule Engine (70/30 Hybrid Architecture)** for detecting complex, coordinated digital payment fraud and mule account rings in the Unified Payments Interface (UPI) ecosystem with **sub-10ms inference latency**.
+An inductive **Graph Neural Network (GraphSAGE)** coupled with an expert **Heuristic Rule Engine (70/30 Hybrid Ensemble)** for detecting complex, coordinated digital payment fraud, mule accounts, and collusion rings in the Unified Payments Interface (UPI) ecosystem with **sub-10ms inference latency**.
 
-Featuring a live transaction monitor designed strictly under the **Wise Design System** (Scandinavian pale sage `#e8ebe6` canvas, Inter 900 heavy display typography, `#9fe870` signature pill accents, 60 FPS pulsating radar halos, and real-time Vis.js graph topology).
+Featuring a live transaction monitor designed strictly under the **Wise Design System** (Scandinavian pale sage `#e8ebe6` canvas, Inter 900 heavy display typography, `#9fe870` signature pill buttons, 60 FPS pulsating radar halos, and real-time Vis.js graph topology).
+
+---
+
+## Live Production Deployment
+
+| Service | URL | Status |
+|---|---|---|
+| **Web Dashboard (Edge CDN)** | [https://gnn-based-upi-fraud-detection.vercel.app](https://gnn-based-upi-fraud-detection.vercel.app) | :white_check_mark: Active |
+| **Health Check API** | [https://gnn-based-upi-fraud-detection.vercel.app/health](https://gnn-based-upi-fraud-detection.vercel.app/health) | :white_check_mark: Active |
+| **Benchmark Stats API** | [https://gnn-based-upi-fraud-detection.vercel.app/stats](https://gnn-based-upi-fraud-detection.vercel.app/stats) | :white_check_mark: Active |
 
 ---
 
@@ -22,7 +37,7 @@ Featuring a live transaction monitor designed strictly under the **Wise Design S
 - **Extreme Imbalance Handling:** Trained with **Sigmoid Focal Loss** ($\alpha=0.25, \gamma=2.0$) on highly skewed datasets (< 1.5% fraud rate) to eliminate trivial benign gradients.
 - **70/30 Hybrid Decision Engine:** Blends topological neural probability ($0.70 \times P_{\text{GNN}}$) with deterministic velocity and anomaly checks ($0.30 \times S_{\text{Rule}}$) for instant cold-start coverage and 100% regulatory explainability (XAI).
 - **Sub-10ms Inference SLA:** Single-sample inference executes in **6.4 ms** on commodity CPU hardware.
-- **1-Click Cloud Deployment on Vercel:** Zero-config serverless edge deployment with instantaneous static frontend delivery and serverless Python microservice execution.
+- **Multi-Service Edge Architecture:** Decoupled frontend gateway (`app.py`) and GNN microservice (`api/index.py`) communicating via Vercel internal service bindings.
 
 ---
 
@@ -54,7 +69,7 @@ graph TD
 
 ## Benchmark Comparison
 
-Evaluated on 5,000 transactions with 5-fold cross-validation under 1.5% fraud rate:
+Evaluated on 5,000 transactions with 5-fold cross-validation under a realistic 1.5% fraud rate:
 
 | Metric | Logistic Reg | Random Forest | XGBoost | 3-Layer MLP | **GraphSAGE (Ours)** |
 |---|---|---|---|---|---|
@@ -69,31 +84,39 @@ Evaluated on 5,000 transactions with 5-fold cross-validation under 1.5% fraud ra
 
 ### 1. Clone & Setup
 ```bash
-git clone https://github.com/<your-username>/GNN-Based-UPI-Fraud-Detection.git
+git clone https://github.com/aryankumarx/GNN-Based-UPI-Fraud-Detection.git
 cd GNN-Based-UPI-Fraud-Detection
 
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
 ```
 
-### 2. Start the FastAPI Engine & Wise Dashboard
+### 2. Install Dependencies
+```bash
+# Lightweight runtime & serving:
+pip install -r requirements.txt
+
+# Full local model training & research (PyTorch, PyG, XGBoost):
+pip install -r requirements-train.txt
+```
+
+### 3. Run FastAPI Engine & Wise Dashboard Locally
 ```bash
 python api/main.py
 ```
-Open **[http://localhost:8000](http://localhost:8000)** in your browser to experience the live Wise interface.
+Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
-### 3. Run Test Suite
+### 4. Run Test Suite (10/10 Passing)
 ```bash
 pytest tests/ -v
 ```
 
-### 4. Interactive CLI Simulation
+### 5. Interactive CLI Transaction Simulator
 ```bash
 python scripts/test_txn_cli.py --amount 75000 --sender U1001 --receiver U9999 --hour 3
 ```
 
-### 5. Profile Latency Percentiles (P50, P95, P99)
+### 6. Profile Latency Percentiles (P50, P95, P99)
 ```bash
 python scripts/profile_latency.py
 ```
@@ -102,19 +125,19 @@ python scripts/profile_latency.py
 
 ## Deployment on Vercel
 
-The project is natively optimized for **Vercel Edge & Serverless Functions** (`vercel.json`, `api/index.py`, and `public/index.html`).
+The project is natively configured for **Vercel Multi-Services** (`vercel.json`, `app.py`, `api/index.py`, and `public/index.html`).
 
-### Deploy via GitHub (Recommended):
-1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+### Deploy via GitHub (1-Click):
+1. Sign in to [vercel.com](https://vercel.com) with GitHub.
 2. Click **Add New...** &rarr; **Project**.
-3. Select your repository: `aryankumarx/GNN-Based-UPI-Fraud-Detection`.
+3. Import **`aryankumarx/GNN-Based-UPI-Fraud-Detection`**.
 4. Framework Preset: select **Other** (Root directory: `./`).
-5. Click **Deploy**. Vercel will build and deploy the dashboard globally on edge CDN in ~45 seconds!
+5. Click **Deploy**. Vercel will build and deploy the dashboard globally on edge CDN in ~40 seconds.
 
 ### Deploy via Vercel CLI:
 ```bash
 npm install -g vercel
-vercel
+vercel --prod
 ```
 
 ---
@@ -122,11 +145,11 @@ vercel
 ## Project Structure
 
 ```
-├── .github/workflows/       # GitHub Actions automated CI testing
+├── .github/workflows/       # Automated CI workflow (pytest across 10 suites)
 ├── api/
 │   ├── main.py             # FastAPI backend with static mounting & CORS
-│   ├── index.py            # Vercel serverless entry point
-│   └── requirements.txt    # Lightweight Vercel serverless dependencies
+│   ├── index.py            # Vercel serverless microservice
+│   └── requirements.txt    # Serverless microservice dependencies
 ├── dashboard/
 │   └── index.html          # Wise-themed interactive SPA dashboard
 ├── docs/
@@ -143,13 +166,15 @@ vercel
 │   ├── pipeline/           # 70/30 Hybrid fusion pipeline
 │   ├── rules/              # Heuristic rule engine & velocity monitors
 │   └── training/           # Sigmoid focal loss & optimization loops
-├── tests/                  # Unit & integration test suites
-├── Dockerfile              # Multi-stage CPU PyTorch container
-└── vercel.json             # Vercel serverless routing configuration
+├── tests/                  # Unit & integration test suites (10 passed)
+├── app.py                  # Vercel root app gateway service
+├── requirements.txt        # Lightweight runtime serverless dependencies
+├── requirements-train.txt  # Full local ML & PyTorch Geometric dependencies
+└── vercel.json             # Vercel multi-service routing and internal bindings
 ```
 
 ---
 
 ## License & Citation
-Licensed under the [MIT License](LICENSE).
-If you find this research or code useful in your academic work, please consider starring the repository and citing this project.
+Licensed under the [MIT License](LICENSE).  
+If you find this research or code useful in your academic work, please star the repository!
