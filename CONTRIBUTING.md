@@ -18,7 +18,8 @@ Thank you for your interest in contributing! We welcome community contributions,
 
 3. Install project dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.txt          # Lightweight runtime & deployment
+   pip install -r requirements-train.txt    # Full local ML & GNN research
    ```
 
 4. Run the test suite:
