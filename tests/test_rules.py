@@ -1,8 +1,8 @@
 import pytest
-from src.inference.rules import RuleEngine
+from src.inference.rules import UPIRuleEngine
 
 def test_rule_engine_mule_device():
-    engine = RuleEngine()
+    engine = UPIRuleEngine()
     
     # Mule device transaction
     mule_txn = {
@@ -12,13 +12,15 @@ def test_rule_engine_mule_device():
         "timestamp": "2026-09-15 03:30:00"
     }
     
-    score, reasons = engine.evaluate(mule_txn)
+    result = engine.evaluate_transaction(mule_txn)
+    score = result["rule_score"]
+    reasons = result["triggered_rules"]
     assert score >= 0.80
     assert len(reasons) > 0
-    assert any("DEV_MULE_002" in r for r in reasons)
+    assert result["has_critical_rule"] is True
 
 def test_rule_engine_clean_txn():
-    engine = RuleEngine()
+    engine = UPIRuleEngine()
     clean_txn = {
         "amount": 450.0,
         "device_id": "DEV_CLEAN_999",
@@ -26,6 +28,9 @@ def test_rule_engine_clean_txn():
         "timestamp": "2026-09-15 14:30:00"
     }
     
-    score, reasons = engine.evaluate(clean_txn)
+    result = engine.evaluate_transaction(clean_txn)
+    score = result["rule_score"]
+    reasons = result["triggered_rules"]
     assert score < 0.20
     assert len(reasons) == 0
+    assert result["has_critical_rule"] is False
