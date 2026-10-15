@@ -30,6 +30,7 @@ def get_dashboard():
     return "<h1>GNN-Based UPI Fraud Detection Engine Running</h1>"
 
 @app.get("/health")
+@app.get("/api/health")
 def health():
     return {
         "status": "healthy",
@@ -38,6 +39,7 @@ def health():
     }
 
 @app.get("/stats")
+@app.get("/api/stats")
 def stats():
     return {
         "models": {
@@ -88,6 +90,7 @@ class TransactionPayload(BaseModel):
     location: Optional[str] = "Mumbai"
 
 @app.post("/predict")
+@app.post("/api/predict")
 def predict_transaction(txn: TransactionPayload):
     # Rule heuristic checks
     is_mule = "MULE" in txn.device_id.upper() or txn.amount > 60000 or "mule" in txn.sender_vpa.lower()
