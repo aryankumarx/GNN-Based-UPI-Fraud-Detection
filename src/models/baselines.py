@@ -12,8 +12,17 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+
+try:
+    from xgboost import XGBClassifier
+except ImportError:
+    XGBClassifier = None
+
+try:
+    from lightgbm import LGBMClassifier
+except ImportError:
+    LGBMClassifier = None
 
 from src.training.evaluate import evaluate_predictions, print_metrics_table
 
@@ -44,22 +53,37 @@ def train_xgboost_baseline(
     y_train: np.ndarray,
     X_test: np.ndarray,
     y_test: np.ndarray,
-) -> Tuple[XGBClassifier, Dict[str, Any]]:
-    """Train XGBoost with scale_pos_weight for class imbalance."""
+) -> Tuple[Any, Dict[str, Any]]:
+    """Train XGBoost or GradientBoosting with class weighting for class imbalance."""
     pos_weight = (len(y_train) - sum(y_train)) / max(1, sum(y_train))
-    model = XGBClassifier(
-        n_estimators=150,
-        max_depth=6,
-        learning_rate=0.05,
-        scale_pos_weight=pos_weight,
-        random_state=42,
-        eval_metric="logloss",
-        n_jobs=-1,
-    )
+    
+    if XGBClassifier is not None:
+        model = XGBClassifier(
+            n_estimators=150,
+            max_depth=6,
+            learning_rate=0.05,
+            scale_pos_weight=pos_weight,
+            random_state=42,
+            eval_metric="logloss",
+            n_jobs=-1,
+        )
+        model_title = "XGBoost Baseline"
+    else:
+        # Fallback to Scikit-Learn HistGradientBoosting
+        class_weight_dict = {0: 1.0, 1: pos_weight}
+        model = HistGradientBoostingClassifier(
+            max_iter=150,
+            max_depth=6,
+            learning_rate=0.05,
+            class_weight=class_weight_dict,
+            random_state=42,
+        )
+        model_title = "GradientBoosting Baseline (HistGB)"
+
     model.fit(X_train, y_train)
     y_prob = model.predict_proba(X_test)[:, 1]
     metrics = evaluate_predictions(y_test, y_prob)
-    print_metrics_table("XGBoost Baseline", metrics)
+    print_metrics_table(model_title, metrics)
     return model, metrics
 
 

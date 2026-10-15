@@ -49,22 +49,25 @@ class UPIGraphBuilder:
         edge_targets = []
         edge_types = []  # 0: shared_device, 1: shared_sender, 2: shared_receiver, 3: shared_ip
 
-        # Helper to create clique or sampled edges within attribute groups
-        def add_edges_for_group(group_col: str, edge_type_id: int):
+        # Helper to create relational edges within attribute groups without noisy mega-hubs
+        def add_edges_for_group(group_col: str, edge_type_id: int, max_degree: int = 15):
             grouped = df.groupby(group_col).indices
             src_list = []
             dst_list = []
             for group_val, indices in grouped.items():
                 if len(indices) < 2:
                     continue
-                # If group is too large, sample pairs to prevent edge explosion
-                if len(indices) > max_edges_per_group:
-                    selected = np.random.choice(indices, size=max_edges_per_group, replace=False)
+                # Skip massive generic merchant hubs that oversmooth unrelated legitimate users
+                if group_col == "receiver_vpa" and len(indices) > 30:
+                    continue
+                # Sample nearest temporal transactions to avoid clique explosion
+                if len(indices) > max_degree:
+                    selected = np.random.choice(indices, size=max_degree, replace=False)
                 else:
                     selected = indices
 
                 for i in range(len(selected)):
-                    for j in range(i + 1, min(i + 6, len(selected))):  # connect to k nearest neighbors in time
+                    for j in range(i + 1, min(i + 4, len(selected))):  # temporal neighbors
                         src_list.extend([selected[i], selected[j]])
                         dst_list.extend([selected[j], selected[i]])
             
@@ -73,10 +76,10 @@ class UPIGraphBuilder:
             edge_types.extend([edge_type_id] * len(src_list))
             print(f"  Added {len(src_list)} edges for attribute: {group_col}")
 
-        add_edges_for_group("device_id", 0)
-        add_edges_for_group("sender_id", 1)
-        add_edges_for_group("receiver_vpa", 2)
-        add_edges_for_group("ip_address", 3)
+        add_edges_for_group("device_id", 0, max_degree=15)
+        add_edges_for_group("sender_id", 1, max_degree=10)
+        add_edges_for_group("receiver_vpa", 2, max_degree=10)
+        add_edges_for_group("ip_address", 3, max_degree=15)
 
         edge_index = torch.tensor([edge_sources, edge_targets], dtype=torch.long)
         edge_attr = torch.tensor(edge_types, dtype=torch.long).unsqueeze(1)

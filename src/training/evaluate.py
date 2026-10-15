@@ -6,8 +6,15 @@ Evaluation metrics suite for fraud detection:
 - Confusion Matrix & Latency
 """
 
+import sys
 from typing import Dict, Any, Tuple
 import numpy as np
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 from sklearn.metrics import (
     precision_score,
     recall_score,
@@ -17,6 +24,19 @@ from sklearn.metrics import (
     confusion_matrix,
     classification_report,
 )
+
+
+def find_optimal_threshold(y_true: np.ndarray, y_prob: np.ndarray) -> float:
+    """Find the probability threshold that maximizes F1-Score."""
+    best_thresh = 0.5
+    best_f1 = -1.0
+    for t in np.linspace(0.05, 0.95, 37):
+        pred = (y_prob >= t).astype(int)
+        f = float(f1_score(y_true, pred, zero_division=0))
+        if f > best_f1:
+            best_f1 = f
+            best_thresh = float(t)
+    return best_thresh
 
 
 def evaluate_predictions(
@@ -50,14 +70,14 @@ def evaluate_predictions(
         "roc_auc": round(roc_auc, 4),
         "auprc": round(auprc, 4),
         "confusion_matrix": cm,
-        "threshold": threshold,
+        "threshold": round(threshold, 4),
     }
 
 
 def print_metrics_table(model_name: str, metrics: Dict[str, Any]):
     """Pretty prints metrics for presentation / logging."""
     print("=" * 55)
-    print(f"📊 Results: {model_name.upper()}")
+    print(f"Results: {model_name.upper()}")
     print("=" * 55)
     print(f"  Precision:         {metrics['precision']*100:.2f}%")
     print(f"  Recall:            {metrics['recall']*100:.2f}%")

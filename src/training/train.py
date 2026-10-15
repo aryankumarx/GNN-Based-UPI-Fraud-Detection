@@ -8,13 +8,24 @@ Outputs a comprehensive benchmark comparison table.
 """
 
 import os
+import sys
 import time
 from typing import Dict, Any, Tuple
+
+# Fix Windows console UTF-8 encoding and unbuffered output
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
+    except Exception:
+        pass
+
+# Ensure project root is in sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch_geometric.loader import NeighborLoader
 
 from src.data.preprocess import UPIPreprocessor
 from src.data.graph_builder import UPIGraphBuilder
@@ -22,7 +33,7 @@ from src.models.graphsage import FraudGraphSAGE
 from src.models.gat import FraudGAT
 from src.models.baselines import train_xgboost_baseline, train_mlp_baseline
 from src.training.losses import FocalLoss
-from src.training.evaluate import evaluate_predictions, print_metrics_table
+from src.training.evaluate import evaluate_predictions, print_metrics_table, find_optimal_threshold
 from src.utils.config import config
 
 
@@ -30,23 +41,23 @@ def train_gnn_model(
     model: nn.Module,
     data,
     model_name: str = "GraphSAGE",
-    epochs: int = 40,
+    epochs: int = 35,
     lr: float = 0.003,
     device: str = "cpu",
     save_path: str = "models/best_model.pt",
 ) -> Tuple[nn.Module, Dict[str, Any]]:
-    """Train GNN with Focal Loss and early stopping."""
+    """Train GNN with balanced Focal Loss and validation threshold tuning."""
     print(f"\n🚀 Training {model_name}...")
     model = model.to(device)
     data = data.to(device)
 
-    # Focal loss handles rare fraud
-    criterion = FocalLoss(alpha=0.25, gamma=2.0)
+    # Balanced Focal loss handles minority fraud class (target==1)
+    criterion = FocalLoss(alpha=0.85, gamma=2.0)
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=5)
 
     best_val_f1 = 0.0
-    best_metrics = {}
+    best_thresh = 0.5
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     start_time = time.time()
@@ -65,19 +76,23 @@ def train_gnn_model(
             probs = torch.softmax(logits, dim=1)[:, 1].cpu().numpy()
             y_val = data.y[data.val_mask].cpu().numpy()
             probs_val = probs[data.val_mask.cpu().numpy()]
-            val_metrics = evaluate_predictions(y_val, probs_val)
+            
+            # Find optimal classification threshold on validation set
+            t = find_optimal_threshold(y_val, probs_val)
+            val_metrics = evaluate_predictions(y_val, probs_val, threshold=t)
 
         scheduler.step(val_metrics["f1_score"])
 
         if val_metrics["f1_score"] > best_val_f1:
             best_val_f1 = val_metrics["f1_score"]
+            best_thresh = t
             torch.save(model.state_dict(), save_path)
 
         if epoch % 5 == 0 or epoch == epochs:
-            print(f"Epoch {epoch:03d}/{epochs:03d} | Loss: {loss.item():.4f} | Val F1: {val_metrics['f1_score']*100:.2f}% | Val AUPRC: {val_metrics['auprc']:.4f}")
+            print(f"Epoch {epoch:03d}/{epochs:03d} | Loss: {loss.item():.4f} | Val F1: {val_metrics['f1_score']*100:.2f}% | Val AUPRC: {val_metrics['auprc']:.4f} (Thresh: {t:.2f})")
 
     train_time = time.time() - start_time
-    print(f"✅ Finished training in {train_time:.2f}s (Best Val F1: {best_val_f1*100:.2f}%)")
+    print(f"✅ Finished training in {train_time:.2f}s (Best Val F1: {best_val_f1*100:.2f}% @ Thresh {best_thresh:.2f})")
 
     # Load best checkpoint for test evaluation
     if os.path.exists(save_path):
@@ -89,7 +104,7 @@ def train_gnn_model(
         probs = torch.softmax(logits, dim=1)[:, 1].cpu().numpy()
         y_test = data.y[data.test_mask].cpu().numpy()
         probs_test = probs[data.test_mask.cpu().numpy()]
-        test_metrics = evaluate_predictions(y_test, probs_test)
+        test_metrics = evaluate_predictions(y_test, probs_test, threshold=best_thresh)
 
     test_metrics["training_time_sec"] = round(train_time, 2)
     print_metrics_table(f"{model_name} (Test Set)", test_metrics)
@@ -99,7 +114,7 @@ def train_gnn_model(
 def run_full_pipeline():
     """Executes the full pipeline: Data -> Graph -> Baselines -> GNNs -> Comparison."""
     print("=" * 60)
-    print("🛡️ GNN-Based UPI Transaction Fraud Detection Pipeline")
+    print("=== GNN-Based UPI Transaction Fraud Detection Pipeline ===")
     print("=" * 60)
 
     # 1. Load / Preprocess Data
@@ -140,7 +155,7 @@ def run_full_pipeline():
 
     # 6. Final Benchmark Summary Table
     print("\n" + "=" * 70)
-    print("🏆 FINAL BENCHMARK COMPARISON TABLE")
+    print("FINAL BENCHMARK COMPARISON TABLE")
     print("=" * 70)
     print(f"{'Model':<25} | {'Precision':<10} | {'Recall':<10} | {'F1-Score':<10} | {'AUPRC':<10} | {'ROC-AUC':<10}")
     print("-" * 70)

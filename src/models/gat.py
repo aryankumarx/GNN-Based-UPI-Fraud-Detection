@@ -61,17 +61,22 @@ class FraudGAT(nn.Module):
         edge_index: torch.Tensor,
         return_attention_weights: bool = False,
     ):
-        x, att1 = self.gat1(x, edge_index, return_attention_weights=True)
-        x = self.bn1(x)
-        x = F.elu(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-
-        x, att2 = self.gat2(x, edge_index, return_attention_weights=True)
-        x = self.bn2(x)
-        x = F.elu(x)
-
-        logits = self.classifier(x)
-
         if return_attention_weights:
+            x, att1 = self.gat1(x, edge_index, return_attention_weights=True)
+            x = self.bn1(x)
+            x = F.elu(x)
+            x, att2 = self.gat2(x, edge_index, return_attention_weights=True)
+            x = self.bn2(x)
+            x = F.elu(x)
+            logits = self.classifier(x)
             return logits, (att1, att2)
-        return logits
+        else:
+            x = self.gat1(x, edge_index)
+            x = self.bn1(x)
+            x = F.elu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+            x = self.gat2(x, edge_index)
+            x = self.bn2(x)
+            x = F.elu(x)
+            logits = self.classifier(x)
+            return logits
