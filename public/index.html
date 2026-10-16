@@ -1118,17 +1118,19 @@
                     enabled: true,
                     solver: 'forceAtlas2Based',
                     forceAtlas2Based: {
-                        gravitationalConstant: -75,
-                        centralGravity: 0.015,
-                        springLength: 140,
-                        springConstant: 0.05,
-                        damping: 0.5,
-                        avoidOverlap: 0.8
+                        gravitationalConstant: -40,
+                        centralGravity: 0.01,
+                        springLength: 120,
+                        springConstant: 0.03,
+                        damping: 0.92,
+                        avoidOverlap: 0.6
                     },
+                    maxVelocity: 25,
+                    minVelocity: 0.75,
                     stabilization: {
                         enabled: true,
-                        iterations: 120,
-                        fit: true
+                        iterations: 150,
+                        updateInterval: 25
                     }
                 },
                 interaction: { hover: true, zoomView: true, dragView: true }
@@ -1325,13 +1327,34 @@
             addTableRow(txnObj);
 
             if (graphNodes.length < 25) {
+                // Calculate smooth orbital coordinate near clean transaction anchor TXN_102
+                let anchorX = -70, anchorY = -130;
+                try {
+                    const pos = networkInstance.getPositions(['TXN_102'])['TXN_102'];
+                    if (pos) { anchorX = pos.x; anchorY = pos.y; }
+                } catch(e) {}
+
+                const count = graphNodes.length;
+                const angle = 0.8 + (count * 0.95);
+                const dist = 70 + (count % 4) * 22;
+                const nx = anchorX + Math.cos(angle) * dist;
+                const ny = anchorY + Math.sin(angle) * dist;
+
                 graphNodes.add({
                     id: txnId,
                     label: `${txnId}\n₹${amount}`,
                     shape: 'dot',
                     size: 14,
                     color: { background: '#2ead4b', border: '#054d28' },
-                    font: { color: '#0e0f0c', size: 10, face: 'Inter' }
+                    font: { color: '#0e0f0c', size: 10, face: 'Inter' },
+                    x: nx,
+                    y: ny
+                });
+                graphEdges.add({
+                    from: txnId,
+                    to: 'TXN_102',
+                    color: { color: '#cdd2cb' },
+                    arrows: 'to'
                 });
             }
         }
@@ -1376,15 +1399,30 @@
 
                     addTableRow(txnObj);
 
-                    // Add flagged node to graph
+                    // Add flagged node to graph with pre-computed smooth radial coordinates around DEV_MULE_002
                     try {
+                        let devX = 180, devY = 80;
+                        try {
+                            const devPos = networkInstance.getPositions(['DEV_MULE_002'])['DEV_MULE_002'];
+                            if (devPos) { devX = devPos.x; devY = devPos.y; }
+                        } catch(e) {}
+
+                        // Non-colliding fixed radial offsets
+                        const angles = { 'TXN_MULE_801': -0.75, 'TXN_MULE_802': 0.65, 'TXN_MULE_803': 2.25 };
+                        const angle = angles[mule.id] || 0;
+                        const dist = 110;
+                        const mx = devX + Math.cos(angle) * dist;
+                        const my = devY + Math.sin(angle) * dist;
+
                         graphNodes.add({
                             id: mule.id,
                             label: `${mule.id}\n₹${mule.amount.toLocaleString('en-IN')} [BLOCKED]`,
                             shape: 'dot',
                             size: 22,
                             color: { background: '#d03238', border: '#a72027' },
-                            font: { color: '#d03238', size: 10, face: 'Inter', strokeWidth: 1 }
+                            font: { color: '#d03238', size: 10, face: 'Inter', strokeWidth: 1 },
+                            x: mx,
+                            y: my
                         });
                         graphEdges.add({
                             from: mule.id,
@@ -1397,7 +1435,6 @@
 
                     if (mule.id === 'TXN_MULE_801') {
                         openAuditDrawer(txnObj);
-                        networkInstance.focus('DEV_MULE_002', { scale: 1.2, animation: { duration: 600 } });
                     }
                 }, delay);
                 delay += 350;
