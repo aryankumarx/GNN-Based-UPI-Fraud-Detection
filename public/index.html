@@ -434,24 +434,98 @@
                         </div>
                     </div>
 
-                    <!-- Graph Canvas (Centered, Spacious 500px Height) -->
+                    <!-- Graph Canvas (Centered, Clear Flow Structure) -->
                     <div id="network-container" class="relative border border-[#eef0ec] overflow-hidden rounded-wise">
+                        <!-- Left-to-Right Stage Flow Header Banner -->
                         <div
-                            class="absolute top-3 left-4 bg-white/95 border border-[#eef0ec] rounded-pill px-3.5 py-1 text-[11px] font-mono text-wiseBody z-10 backdrop-blur shadow-sm flex items-center gap-3">
+                            class="absolute top-3 inset-x-4 flex flex-wrap justify-between items-center gap-2 z-10 pointer-events-none">
+                            <div
+                                class="bg-white/95 border border-[#eef0ec] rounded-pill px-3 py-1 shadow-xs text-[11px] font-mono text-wiseBody flex items-center gap-1.5 backdrop-blur">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>
+                                <span><b>STAGE 1</b>: Origin (Sender / Victim)</span>
+                            </div>
+                            <div class="hidden sm:flex items-center gap-1 text-[11px] font-mono text-wiseMute font-bold">
+                                <span>─── Money Transfer ──▶</span>
+                            </div>
+                            <div
+                                class="bg-white/95 border border-[#eef0ec] rounded-pill px-3 py-1 shadow-xs text-[11px] font-mono text-wiseBody flex items-center gap-1.5 backdrop-blur">
+                                <span class="w-2.5 h-2.5 bg-warning rotate-45 inline-block"></span>
+                                <span><b>STAGE 2</b>: GNN Analysis &amp; Shared Device</span>
+                            </div>
+                            <div class="hidden sm:flex items-center gap-1 text-[11px] font-mono text-wiseMute font-bold">
+                                <span>─── Cashout Attempt ──▶</span>
+                            </div>
+                            <div
+                                class="bg-white/95 border border-[#eef0ec] rounded-pill px-3 py-1 shadow-xs text-[11px] font-mono text-wiseBody flex items-center gap-1.5 backdrop-blur">
+                                <span class="w-2.5 h-2.5 rounded-full bg-negative inline-block"></span>
+                                <span><b>STAGE 3</b>: Destination (Merchant / Blocked Sink)</span>
+                            </div>
+                        </div>
+
+                        <!-- FLOATING INTERACTIVE ZOOM & SCROLL NAVIGATION CONTROLS -->
+                        <div class="absolute top-14 right-4 z-20 flex flex-col items-center bg-white/95 backdrop-blur-md p-1.5 rounded-wise border border-[#d7dbd4] shadow-md select-none">
+                            <!-- Zoom In -->
+                            <button onclick="zoomGraph(0.25)" title="Zoom In (+)"
+                                class="w-7 h-7 rounded-pill hover:bg-canvasSoft active:bg-[#eef0ec] flex items-center justify-center text-ink transition">
+                                <i data-lucide="zoom-in" class="w-4 h-4"></i>
+                            </button>
+                            <!-- Zoom Scale Indicator / Recenter -->
+                            <button onclick="recenterGraph()" title="Fit Screen / Reset Zoom"
+                                class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-wiseBody hover:text-ink hover:bg-canvasSoft transition">
+                                <span id="graph-zoom-label">100%</span>
+                            </button>
+                            <!-- Zoom Out -->
+                            <button onclick="zoomGraph(-0.25)" title="Zoom Out (-)"
+                                class="w-7 h-7 rounded-pill hover:bg-canvasSoft active:bg-[#eef0ec] flex items-center justify-center text-ink transition">
+                                <i data-lucide="zoom-out" class="w-4 h-4"></i>
+                            </button>
+
+                            <div class="w-5 border-t border-[#eef0ec] my-1"></div>
+
+                            <!-- Scroll / Pan D-Pad -->
+                            <div class="grid grid-cols-3 gap-0.5 p-0.5 bg-canvasSoft rounded-wise">
+                                <div></div>
+                                <button onclick="panGraph(0, -90)" title="Scroll Up"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-wiseBody hover:text-ink hover:bg-white transition">
+                                    <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <div></div>
+                                <button onclick="panGraph(-90, 0)" title="Scroll Left"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-wiseBody hover:text-ink hover:bg-white transition">
+                                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="recenterGraph()" title="Fit Screen"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-wiseBody hover:text-ink hover:bg-white transition">
+                                    <i data-lucide="crosshair" class="w-3 h-3"></i>
+                                </button>
+                                <button onclick="panGraph(90, 0)" title="Scroll Right"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-wiseBody hover:text-ink hover:bg-white transition">
+                                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <div></div>
+                                <button onclick="panGraph(0, 90)" title="Scroll Down"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-wiseBody hover:text-ink hover:bg-white transition">
+                                    <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <div></div>
+                            </div>
+                        </div>
+
+                        <!-- Graph Legend at bottom left -->
+                        <div
+                            class="absolute bottom-3 left-4 bg-white/95 border border-[#eef0ec] rounded-pill px-3.5 py-1 text-[10.5px] font-mono text-wiseBody z-10 backdrop-blur shadow-xs flex items-center gap-3">
                             <span class="flex items-center gap-1.5"><span
-                                    class="w-2.5 h-2.5 rounded-full bg-positive inline-block"></span>Legitimate
-                                User</span>
+                                    class="w-2.5 h-2.5 rounded-full bg-positive inline-block"></span>Clean Flow</span>
                             <span class="flex items-center gap-1.5"><span
-                                    class="w-2.5 h-2.5 rounded-full bg-negative inline-block animate-ping"></span>Flagged
-                                Mule</span>
+                                    class="w-2.5 h-2.5 rounded-full bg-negative inline-block animate-ping"></span>Fraud Ring</span>
                             <span class="flex items-center gap-1.5"><span
-                                    class="w-2.5 h-2.5 bg-warning inline-block rotate-45"></span>Shared Hardware</span>
+                                    class="w-2.5 h-2.5 bg-warning inline-block rotate-45"></span>Shared Phone HW</span>
                             <span class="flex items-center gap-1.5"><span
-                                    class="w-2.5 h-2.5 bg-ink inline-block rotate-45"></span>Proxy IP</span>
+                                    class="w-2.5 h-2.5 bg-ink inline-block rotate-45"></span>Proxy VPN</span>
                         </div>
                         <div
                             class="absolute bottom-3 right-4 bg-white/90 border border-[#eef0ec] rounded-pill px-3 py-1 text-[10px] font-mono text-wiseMute z-10">
-                            <span>Physics Engine: ForceAtlas2 &bull; Animated Halos &amp; Edge Energy</span>
+                            <span>Flow: Left (Sender) ➔ Center (GNN Detection) ➔ Right (Destination)</span>
                         </div>
                     </div>
 
@@ -1088,105 +1162,204 @@
             }
         });
 
-        // ================= VIS.JS NETWORK GRAPH WITH LIVE CANVAS ANIMATIONS =================
+        // ================= VIS.JS NETWORK GRAPH WITH SIMPLIFIED HORIZONTAL FLOW =================
         let networkInstance = null;
         let graphNodes = null;
         let graphEdges = null;
+        let cleanTxnCount = 0;
 
         function initNetworkGraph() {
             const container = document.getElementById('network-container');
 
-            // Symmetrically centered coordinates around origin (0, 0)
+            // Crystal-Clear Left-to-Right Architecture:
+            // TOP LANE: Legitimate Consumer Payment Flow (Green)
+            // BOTTOM LANE: Fraud Mule Ring Attack Flow (Red / Amber)
             graphNodes = new vis.DataSet([
-                { id: 'TXN_101', label: 'TXN_101\n₹420', shape: 'dot', size: 16, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: -220, y: -80 },
-                { id: 'TXN_102', label: 'TXN_102\n₹1,250', shape: 'dot', size: 18, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: -70, y: -130 },
-                { id: 'TXN_103', label: 'TXN_103\n₹3,100', shape: 'dot', size: 20, color: { background: '#2ead4b', border: '#054d28' }, font: { color: '#0e0f0c', size: 11, face: 'Inter' }, x: 90, y: -80 },
-                { id: 'DEV_MULE_002', label: 'DEV_MULE_002\n[Shared HW]', shape: 'diamond', size: 28, color: { background: '#ffd11a', border: '#b86700' }, font: { color: '#0e0f0c', size: 11, face: 'JetBrains Mono' }, x: 180, y: 80 },
-                { id: 'IP_10_0_99_4', label: '10.0.99.4\n[Proxy IP]', shape: 'diamond', size: 24, color: { background: '#0e0f0c', border: '#0e0f0c' }, font: { color: '#9fe870', size: 11, face: 'JetBrains Mono' }, x: -180, y: 80 },
-                { id: 'TXN_MULE_9481', label: 'TXN_MULE_9481\n₹85,000 [FLAGGED]', shape: 'dot', size: 28, color: { background: '#d03238', border: '#a72027' }, font: { color: '#d03238', size: 11, strokeWidth: 1 }, x: 0, y: 90 },
+                // ─── TOP LANE: LEGITIMATE PAYMENT FLOW ───
+                {
+                    id: 'USER_CLEAN',
+                    label: 'Aryan (User)\n[Verified @oksbi]',
+                    shape: 'dot',
+                    size: 22,
+                    color: { background: '#2ead4b', border: '#054d28' },
+                    font: { color: '#0e0f0c', size: 11, face: 'Inter', strokeWidth: 2, strokeColor: '#ffffff' },
+                    x: -280,
+                    y: -100,
+                    fixed: true
+                },
+                {
+                    id: 'MERCHANT_SWIGGY',
+                    label: 'Swiggy Merchant\n[Approved ✅]',
+                    shape: 'dot',
+                    size: 24,
+                    color: { background: '#2ead4b', border: '#054d28' },
+                    font: { color: '#054d28', size: 11, face: 'Inter', strokeWidth: 2, strokeColor: '#ffffff' },
+                    x: 280,
+                    y: -100,
+                    fixed: true
+                },
+
+                // ─── BOTTOM LANE: FRAUD MULE RING ATTACK ───
+                // 1. Victim / Origin (Left)
+                {
+                    id: 'VICTIM_USER',
+                    label: 'Victim Account\n[Targeted @okhdfc]',
+                    shape: 'dot',
+                    size: 20,
+                    color: { background: '#e8ebe6', border: '#868685' },
+                    font: { color: '#454745', size: 10, face: 'Inter' },
+                    x: -280,
+                    y: 95,
+                    fixed: true
+                },
+                // 2. Mule Hop 1 (Layering)
+                {
+                    id: 'TXN_MULE_9481',
+                    label: 'Mule-1 (Layering)\n₹85,000 [FLAGGED]',
+                    shape: 'dot',
+                    size: 26,
+                    color: { background: '#d03238', border: '#a72027' },
+                    font: { color: '#d03238', size: 11, face: 'Inter', strokeWidth: 2, strokeColor: '#ffffff' },
+                    x: -100,
+                    y: 95,
+                    fixed: true
+                },
+                // 3. Shared Hardware & Proxy (Center GNN Detection)
+                {
+                    id: 'DEV_MULE_002',
+                    label: 'DEV_MULE_002\n[Shared Phone HW]',
+                    shape: 'diamond',
+                    size: 28,
+                    color: { background: '#ffd11a', border: '#b86700' },
+                    font: { color: '#0e0f0c', size: 11, face: 'JetBrains Mono' },
+                    x: 60,
+                    y: 20,
+                    fixed: true
+                },
+                {
+                    id: 'IP_10_0_99_4',
+                    label: '10.0.99.4\n[Proxy VPN]',
+                    shape: 'diamond',
+                    size: 22,
+                    color: { background: '#0e0f0c', border: '#0e0f0c' },
+                    font: { color: '#9fe870', size: 10, face: 'JetBrains Mono' },
+                    x: 60,
+                    y: 170,
+                    fixed: true
+                },
+                // 4. Mule Hop 2 (Cashout Attempt)
+                {
+                    id: 'TXN_MULE_801',
+                    label: 'Mule-2 (Collusion)\n₹80,000 [Mule Ring]',
+                    shape: 'dot',
+                    size: 24,
+                    color: { background: '#d03238', border: '#a72027' },
+                    font: { color: '#d03238', size: 11, face: 'Inter' },
+                    x: 190,
+                    y: 95,
+                    fixed: true
+                },
+                // 5. Laundering Sink (Right Destination)
+                {
+                    id: 'CRYPTO_SINK',
+                    label: 'Offshore Crypto Sink\n[BLOCKED 🚨]',
+                    shape: 'dot',
+                    size: 28,
+                    color: { background: '#a7000d', border: '#320707' },
+                    font: { color: '#a7000d', size: 11, face: 'Inter', strokeWidth: 2, strokeColor: '#ffffff' },
+                    x: 330,
+                    y: 95,
+                    fixed: true
+                }
             ]);
 
             graphEdges = new vis.DataSet([
-                { id: 'e1', from: 'TXN_101', to: 'TXN_102', color: { color: '#cdd2cb' }, arrows: 'to' },
-                { id: 'e2', from: 'TXN_102', to: 'TXN_103', color: { color: '#cdd2cb' }, arrows: 'to' },
-                { id: 'e3', from: 'TXN_MULE_9481', to: 'DEV_MULE_002', label: 'shared_dev', color: { color: '#d03238' }, width: 3, font: { color: '#d03238', size: 10 } },
-                { id: 'e4', from: 'TXN_MULE_9481', to: 'IP_10_0_99_4', label: 'shared_ip', color: { color: '#d03238' }, width: 3, font: { color: '#d03238', size: 10 } }
+                // ─── Clean Stream Edge ───
+                { id: 'e_clean', from: 'USER_CLEAN', to: 'MERCHANT_SWIGGY', label: '₹450 Food Order [PASS]', color: { color: '#2ead4b' }, width: 3, arrows: 'to', font: { color: '#054d28', size: 11, background: '#e2f6d5' } },
+
+                // ─── Fraud Ring Attack Flow Edges ───
+                { id: 'e_scam', from: 'VICTIM_USER', to: 'TXN_MULE_9481', label: 'Phishing Transfer ₹85k', color: { color: '#d03238' }, width: 3, arrows: 'to', font: { color: '#a7000d', size: 10, background: '#ffeded' } },
+                { id: 'e_dev1', from: 'TXN_MULE_9481', to: 'DEV_MULE_002', label: 'shares_device', color: { color: '#ffd11a' }, width: 2.5, dashes: true, font: { color: '#b86700', size: 9, background: '#fffbeb' } },
+                { id: 'e_ip1', from: 'TXN_MULE_9481', to: 'IP_10_0_99_4', label: 'proxy_vpn', color: { color: '#868685' }, width: 2, dashes: true, font: { color: '#454745', size: 9 } },
+                { id: 'e_layer', from: 'TXN_MULE_9481', to: 'TXN_MULE_801', label: 'rapid dispersion', color: { color: '#d03238' }, width: 3, arrows: 'to', font: { color: '#d03238', size: 10, background: '#ffeded' } },
+                { id: 'e_dev2', from: 'TXN_MULE_801', to: 'DEV_MULE_002', label: 'same device!', color: { color: '#ffd11a' }, width: 2.5, dashes: true, font: { color: '#b86700', size: 9, background: '#fffbeb' } },
+                { id: 'e_sink', from: 'TXN_MULE_801', to: 'CRYPTO_SINK', label: 'Cashout Attempt [BLOCKED]', color: { color: '#a7000d' }, width: 3.5, arrows: 'to', font: { color: '#a7000d', size: 10, background: '#ffe6e6' } }
             ]);
 
             const options = {
                 physics: {
-                    enabled: true,
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -40,
-                        centralGravity: 0.01,
-                        springLength: 120,
-                        springConstant: 0.03,
-                        damping: 0.92,
-                        avoidOverlap: 0.6
-                    },
-                    maxVelocity: 25,
-                    minVelocity: 0.75,
-                    stabilization: {
-                        enabled: true,
-                        iterations: 150,
-                        updateInterval: 25
-                    }
+                    enabled: false // Fixed coordinates for crystal-clear, zero-jitter horizontal flow
                 },
-                interaction: { hover: true, zoomView: true, dragView: true }
+                interaction: {
+                    hover: true,
+                    zoomView: true,
+                    dragView: true,
+                    dragNodes: false,
+                    zoomSpeed: 0.05
+                }
             };
 
             networkInstance = new vis.Network(container, { nodes: graphNodes, edges: graphEdges }, options);
 
-            // ================= LIVE CANVAS ANIMATION LAYER (Radar Halos & Flowing Energy Packets) =================
-            let animTick = 0;
+            // Update zoom indicator on user scroll/pinch zoom
+            networkInstance.on('zoom', function () {
+                updateZoomDisplay(networkInstance.getScale());
+            });
+
+            // ================= LIVE CANVAS ANIMATION LAYER (Silky-Smooth 60FPS Radar Halos & Comet Trails) =================
             networkInstance.on('afterDrawing', function (ctx) {
-                animTick += 0.035;
+                const tNow = animProgress;
 
                 // 1. Radar wave pulse rings on flagged/mule nodes
-                const flaggedNodeIds = ['TXN_MULE_9481', 'DEV_MULE_002', 'TXN_MULE_801', 'TXN_MULE_802', 'TXN_MULE_803'];
+                const flaggedNodeIds = ['TXN_MULE_9481', 'DEV_MULE_002', 'TXN_MULE_801', 'CRYPTO_SINK', 'TXN_MULE_802', 'TXN_MULE_803'];
                 flaggedNodeIds.forEach(nodeId => {
                     try {
                         const pos = networkInstance.getPositions([nodeId])[nodeId];
                         if (pos) {
-                            // Ring 1 (pulsing outward)
-                            const phase1 = (animTick) % 2;
-                            const r1 = 22 + phase1 * 28;
-                            const a1 = Math.max(0, 0.7 - phase1 * 0.35);
-                            ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, r1, 0, 2 * Math.PI, false);
-                            ctx.strokeStyle = `rgba(208, 50, 56, ${a1})`;
-                            ctx.lineWidth = 2.5;
-                            ctx.stroke();
-
-                            // Ring 2 (offset outward)
-                            const phase2 = (animTick + 1) % 2;
-                            const r2 = 22 + phase2 * 28;
-                            const a2 = Math.max(0, 0.7 - phase2 * 0.35);
-                            ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, r2, 0, 2 * Math.PI, false);
-                            ctx.strokeStyle = `rgba(208, 50, 56, ${a2})`;
-                            ctx.lineWidth = 1.5;
-                            ctx.stroke();
+                            // Smooth dual concentric sonar ripples with sinusoidal easing
+                            for (let i = 0; i < 2; i++) {
+                                const wave = ((tNow * 0.7) + i * 0.5) % 1;
+                                const r = 22 + wave * 32;
+                                const alpha = Math.sin(wave * Math.PI) * 0.65;
+                                ctx.beginPath();
+                                ctx.arc(pos.x, pos.y, r, 0, 2 * Math.PI, false);
+                                ctx.strokeStyle = `rgba(208, 50, 56, ${alpha.toFixed(3)})`;
+                                ctx.lineWidth = 2;
+                                ctx.stroke();
+                            }
 
                             // Glowing core aura
+                            const breathe = 24 + Math.sin(tNow * 3.5) * 2;
                             ctx.beginPath();
-                            ctx.arc(pos.x, pos.y, 24 + Math.sin(animTick * 3) * 2, 0, 2 * Math.PI, false);
+                            ctx.arc(pos.x, pos.y, breathe, 0, 2 * Math.PI, false);
                             ctx.fillStyle = 'rgba(208, 50, 56, 0.12)';
                             ctx.fill();
                         }
                     } catch (e) { }
                 });
 
-                // 2. Animated particles flowing along collusion and normal payment edges
+                // 2. Subtle ambient green aura on verified consumer & merchant nodes
+                ['USER_CLEAN', 'MERCHANT_SWIGGY'].forEach(nodeId => {
+                    try {
+                        const pos = networkInstance.getPositions([nodeId])[nodeId];
+                        if (pos) {
+                            const breathe = 24 + Math.sin(tNow * 2.5) * 1.8;
+                            ctx.beginPath();
+                            ctx.arc(pos.x, pos.y, breathe, 0, 2 * Math.PI, false);
+                            ctx.fillStyle = 'rgba(46, 173, 75, 0.12)';
+                            ctx.fill();
+                        }
+                    } catch (e) { }
+                });
+
+                // 3. Flowing energy packets with graceful comet light trails
                 const activeStreams = [
-                    { from: 'TXN_MULE_9481', to: 'DEV_MULE_002', color: '#d03238' },
-                    { from: 'TXN_MULE_9481', to: 'IP_10_0_99_4', color: '#d03238' },
-                    { from: 'TXN_MULE_801', to: 'DEV_MULE_002', color: '#d03238' },
-                    { from: 'TXN_MULE_802', to: 'DEV_MULE_002', color: '#d03238' },
-                    { from: 'TXN_MULE_803', to: 'DEV_MULE_002', color: '#d03238' },
-                    { from: 'TXN_101', to: 'TXN_102', color: '#2ead4b' },
-                    { from: 'TXN_102', to: 'TXN_103', color: '#2ead4b' }
+                    { from: 'USER_CLEAN', to: 'MERCHANT_SWIGGY', color: '#2ead4b', speed: 0.32, count: 2 },
+                    { from: 'VICTIM_USER', to: 'TXN_MULE_9481', color: '#d03238', speed: 0.42, count: 2 },
+                    { from: 'TXN_MULE_9481', to: 'TXN_MULE_801', color: '#d03238', speed: 0.50, count: 2 },
+                    { from: 'TXN_MULE_801', to: 'CRYPTO_SINK', color: '#d03238', speed: 0.50, count: 2 },
+                    { from: 'TXN_MULE_9481', to: 'DEV_MULE_002', color: '#ffd11a', speed: 0.38, count: 1 },
+                    { from: 'TXN_MULE_801', to: 'DEV_MULE_002', color: '#ffd11a', speed: 0.38, count: 1 }
                 ];
 
                 activeStreams.forEach(stream => {
@@ -1195,26 +1368,53 @@
                         const posTo = networkInstance.getPositions([stream.to])[stream.to];
                         if (posFrom && posTo) {
                             const isFraud = stream.color === '#d03238';
-                            const speed = isFraud ? 0.55 : 0.35;
-                            const t = (animTick * speed) % 1;
-                            const px = posFrom.x + (posTo.x - posFrom.x) * t;
-                            const py = posFrom.y + (posTo.y - posFrom.y) * t;
+                            const particleCount = stream.count || 1;
 
-                            ctx.beginPath();
-                            ctx.arc(px, py, isFraud ? 4.5 : 3.5, 0, 2 * Math.PI, false);
-                            ctx.fillStyle = stream.color;
-                            ctx.shadowColor = stream.color;
-                            ctx.shadowBlur = isFraud ? 8 : 4;
-                            ctx.fill();
-                            ctx.shadowBlur = 0;
+                            for (let k = 0; k < particleCount; k++) {
+                                const offset = k / particleCount;
+                                const t = ((tNow * stream.speed) + offset) % 1;
+                                const px = posFrom.x + (posTo.x - posFrom.x) * t;
+                                const py = posFrom.y + (posTo.y - posFrom.y) * t;
+
+                                // Graceful comet tail
+                                const trailT = Math.max(0, t - 0.08);
+                                const tx = posFrom.x + (posTo.x - posFrom.x) * trailT;
+                                const ty = posFrom.y + (posTo.y - posFrom.y) * trailT;
+
+                                const grad = ctx.createLinearGradient(tx, ty, px, py);
+                                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                                grad.addColorStop(1, stream.color);
+
+                                ctx.beginPath();
+                                ctx.moveTo(tx, ty);
+                                ctx.lineTo(px, py);
+                                ctx.strokeStyle = grad;
+                                ctx.lineWidth = isFraud ? 3.5 : 2.5;
+                                ctx.stroke();
+
+                                // Luminous particle head
+                                ctx.beginPath();
+                                ctx.arc(px, py, isFraud ? 4.5 : 3.8, 0, 2 * Math.PI, false);
+                                ctx.fillStyle = stream.color;
+                                ctx.shadowColor = stream.color;
+                                ctx.shadowBlur = isFraud ? 8 : 4;
+                                ctx.fill();
+                                ctx.shadowBlur = 0;
+                            }
                         }
                     } catch (e) { }
                 });
             });
 
-            // 60fps Redraw Loop
-            function loopAnim() {
+            // Smooth Delta-Time Render Loop
+            let lastAnimTime = performance.now();
+            let animProgress = 0;
+
+            function loopAnim(now) {
                 if (networkInstance) {
+                    const delta = Math.min((now - lastAnimTime) / 1000, 0.1);
+                    lastAnimTime = now;
+                    animProgress += delta;
                     networkInstance.redraw();
                 }
                 requestAnimationFrame(loopAnim);
@@ -1224,16 +1424,52 @@
             // Center nicely after initial layout
             setTimeout(() => {
                 recenterGraph();
+                lucide.createIcons();
             }, 300);
 
             networkInstance.on('click', function (params) {
                 if (params.nodes.length > 0) {
                     const nodeId = params.nodes[0];
-                    if (nodeId.toString().startsWith('TXN_MULE') || nodeId.toString().startsWith('TXN_')) {
+                    if (nodeId.toString().startsWith('TXN_MULE') || nodeId.toString().startsWith('TXN_') || nodeId === 'VICTIM_USER') {
                         openAuditDrawerForNode(nodeId);
                     }
                 }
             });
+        }
+
+        // ================= ZOOM & PAN NAVIGATION HELPERS =================
+        function zoomGraph(delta) {
+            if (!networkInstance) return;
+            const currentScale = networkInstance.getScale();
+            const newScale = Math.min(Math.max(currentScale * (1 + delta), 0.35), 2.8);
+            networkInstance.moveTo({
+                scale: newScale,
+                animation: {
+                    duration: 300,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+            updateZoomDisplay(newScale);
+        }
+
+        function panGraph(dx, dy) {
+            if (!networkInstance) return;
+            const pos = networkInstance.getViewPosition();
+            networkInstance.moveTo({
+                position: { x: pos.x + dx, y: pos.y + dy },
+                animation: {
+                    duration: 250,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+        }
+
+        function updateZoomDisplay(scale) {
+            const el = document.getElementById('graph-zoom-label');
+            if (el) {
+                const s = scale || (networkInstance ? networkInstance.getScale() : 1);
+                el.innerText = `${Math.round(s * 100)}%`;
+            }
         }
 
         // Recenter Graph View Helper
@@ -1241,10 +1477,11 @@
             if (networkInstance) {
                 networkInstance.fit({
                     animation: {
-                        duration: 800,
+                        duration: 600,
                         easingFunction: 'easeInOutQuad'
                     }
                 });
+                setTimeout(() => updateZoomDisplay(networkInstance.getScale()), 650);
             }
         }
 
@@ -1327,44 +1564,54 @@
             addTableRow(txnObj);
 
             if (graphNodes.length < 25) {
-                // Calculate smooth orbital coordinate near clean transaction anchor TXN_102
-                let anchorX = -70, anchorY = -130;
+                cleanTxnCount++;
+                const count = cleanTxnCount;
+                const cleanId = 'TXN_CLEAN_' + count;
+                const offset = (count % 4);
+                const nx = -140 + offset * 70;
+                const ny = -160 + (offset % 2 === 0 ? -15 : 15);
+
                 try {
-                    const pos = networkInstance.getPositions(['TXN_102'])['TXN_102'];
-                    if (pos) { anchorX = pos.x; anchorY = pos.y; }
+                    graphNodes.add({
+                        id: cleanId,
+                        label: `${sender.split('@')[0]}\n₹${amount}`,
+                        shape: 'dot',
+                        size: 16,
+                        color: { background: '#2ead4b', border: '#054d28' },
+                        font: { color: '#0e0f0c', size: 10, face: 'Inter' },
+                        x: nx,
+                        y: ny,
+                        fixed: true
+                    });
+                    graphEdges.add([
+                        {
+                            id: 'e_in_' + cleanId,
+                            from: 'USER_CLEAN',
+                            to: cleanId,
+                            color: { color: '#2ead4b' },
+                            width: 2,
+                            arrows: 'to'
+                        },
+                        {
+                            id: 'e_out_' + cleanId,
+                            from: cleanId,
+                            to: 'MERCHANT_SWIGGY',
+                            label: `₹${amount}`,
+                            color: { color: '#2ead4b' },
+                            width: 2,
+                            arrows: 'to',
+                            font: { color: '#054d28', size: 9, background: '#e2f6d5' }
+                        }
+                    ]);
                 } catch(e) {}
-
-                const count = graphNodes.length;
-                const angle = 0.8 + (count * 0.95);
-                const dist = 70 + (count % 4) * 22;
-                const nx = anchorX + Math.cos(angle) * dist;
-                const ny = anchorY + Math.sin(angle) * dist;
-
-                graphNodes.add({
-                    id: txnId,
-                    label: `${txnId}\n₹${amount}`,
-                    shape: 'dot',
-                    size: 14,
-                    color: { background: '#2ead4b', border: '#054d28' },
-                    font: { color: '#0e0f0c', size: 10, face: 'Inter' },
-                    x: nx,
-                    y: ny
-                });
-                graphEdges.add({
-                    from: txnId,
-                    to: 'TXN_102',
-                    color: { color: '#cdd2cb' },
-                    arrows: 'to'
-                });
             }
         }
 
         // TRIGGER MULE ATTACK SIMULATION (Wise Style)
         function triggerMuleAttack() {
             const attackBurst = [
-                { id: 'TXN_MULE_801', sender: 'mule_agent_01@oksbi', receiver: 'crypto_sink@paytm', amount: 92000, gnn: 0.952, rule: 0.92, device: 'DEV_MULE_002', ip: '10.0.99.4' },
-                { id: 'TXN_MULE_802', sender: 'mule_agent_02@okhdfc', receiver: 'crypto_sink@paytm', amount: 89000, gnn: 0.941, rule: 0.88, device: 'DEV_MULE_002', ip: '10.0.99.4' },
-                { id: 'TXN_MULE_803', sender: 'fast_cash_88@okaxis', receiver: 'crypto_sink@paytm', amount: 95000, gnn: 0.968, rule: 0.95, device: 'DEV_MULE_002', ip: '10.0.99.4' },
+                { id: 'TXN_MULE_802', sender: 'mule_agent_02@okhdfc', receiver: 'crypto_sink@paytm', amount: 89000, gnn: 0.941, rule: 0.88, device: 'DEV_MULE_002', ip: '10.0.99.4', x: 190, y: 15 },
+                { id: 'TXN_MULE_803', sender: 'fast_cash_88@okaxis', receiver: 'crypto_sink@paytm', amount: 95000, gnn: 0.968, rule: 0.95, device: 'DEV_MULE_002', ip: '10.0.99.4', x: 190, y: 175 },
             ];
 
             let delay = 0;
@@ -1399,21 +1646,8 @@
 
                     addTableRow(txnObj);
 
-                    // Add flagged node to graph with pre-computed smooth radial coordinates around DEV_MULE_002
+                    // Add flagged mule node with fixed non-colliding fan-out coordinates
                     try {
-                        let devX = 180, devY = 80;
-                        try {
-                            const devPos = networkInstance.getPositions(['DEV_MULE_002'])['DEV_MULE_002'];
-                            if (devPos) { devX = devPos.x; devY = devPos.y; }
-                        } catch(e) {}
-
-                        // Non-colliding fixed radial offsets
-                        const angles = { 'TXN_MULE_801': -0.75, 'TXN_MULE_802': 0.65, 'TXN_MULE_803': 2.25 };
-                        const angle = angles[mule.id] || 0;
-                        const dist = 110;
-                        const mx = devX + Math.cos(angle) * dist;
-                        const my = devY + Math.sin(angle) * dist;
-
                         graphNodes.add({
                             id: mule.id,
                             label: `${mule.id}\n₹${mule.amount.toLocaleString('en-IN')} [BLOCKED]`,
@@ -1421,16 +1655,37 @@
                             size: 22,
                             color: { background: '#d03238', border: '#a72027' },
                             font: { color: '#d03238', size: 10, face: 'Inter', strokeWidth: 1 },
-                            x: mx,
-                            y: my
+                            x: mule.x,
+                            y: mule.y,
+                            fixed: true
                         });
-                        graphEdges.add({
-                            from: mule.id,
-                            to: 'DEV_MULE_002',
-                            label: 'colludes',
-                            color: { color: '#d03238' },
-                            width: 3
-                        });
+                        graphEdges.add([
+                            {
+                                id: 'e_dev_' + mule.id,
+                                from: mule.id,
+                                to: 'DEV_MULE_002',
+                                label: 'colludes',
+                                color: { color: '#ffd11a' },
+                                width: 2.5,
+                                dashes: true
+                            },
+                            {
+                                id: 'e_fan_' + mule.id,
+                                from: 'TXN_MULE_9481',
+                                to: mule.id,
+                                color: { color: '#d03238' },
+                                width: 2.5,
+                                arrows: 'to'
+                            },
+                            {
+                                id: 'e_sink_' + mule.id,
+                                from: mule.id,
+                                to: 'CRYPTO_SINK',
+                                color: { color: '#a7000d' },
+                                width: 3,
+                                arrows: 'to'
+                            }
+                        ]);
                     } catch (e) { }
 
                     if (mule.id === 'TXN_MULE_801') {
